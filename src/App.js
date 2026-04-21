@@ -1,24 +1,185 @@
-import logo from './logo.svg';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { VolunteerProvider } from './context/VolunteerContext';
+
+// Pages
+import LoginPage from './pages/auth/LoginPage';
+import MakerHomePage from './pages/volunteer/MakerHomePage';
+import CheckerHomePage from './pages/volunteer/CheckerHomePage';
+import VolunteerUploadPage from './pages/volunteer/VolunteerUploadPage';
+import DashboardPage from './pages/volunteer/DashboardPage';
+
 import './App.css';
+
+// Protected Route Component
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { isAuthenticated, isLoading, userRole } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(userRole)) {
+    // Redirect based on role
+    if (userRole === 1) {
+      return <Navigate to="/maker" replace />;
+    } else if (userRole === 2) {
+      return <Navigate to="/checker" replace />;
+    } else if (userRole === 3) {
+      return <Navigate to="/admin" replace />;
+    }
+  }
+
+  return children;
+};
+
+// Public Route Component (redirect if authenticated)
+const PublicRoute = ({ children }) => {
+  const { isAuthenticated, isLoading, userRole } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+        <p>Loading...</p>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    // Redirect based on role
+    if (userRole === 1) {
+      return <Navigate to="/maker" replace />;
+    } else if (userRole === 2) {
+      return <Navigate to="/checker" replace />;
+    } else if (userRole === 3) {
+      return <Navigate to="/admin" replace />;
+    }
+    return <Navigate to="/maker" replace />;
+  }
+
+  return children;
+};
+
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <LoginPage />
+          </PublicRoute>
+        }
+      />
+
+      {/* Maker Routes */}
+      <Route
+        path="/maker"
+        element={
+          <ProtectedRoute allowedRoles={[1, 3]}>
+            <MakerHomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/maker/upload"
+        element={
+          <ProtectedRoute allowedRoles={[1, 3]}>
+            <VolunteerUploadPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/maker/review"
+        element={
+          <ProtectedRoute allowedRoles={[1, 3]}>
+            <MakerHomePage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Checker Routes */}
+      <Route
+        path="/checker"
+        element={
+          <ProtectedRoute allowedRoles={[2, 3]}>
+            <CheckerHomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/checker/review"
+        element={
+          <ProtectedRoute allowedRoles={[2, 3]}>
+            <CheckerHomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/checker/print"
+        element={
+          <ProtectedRoute allowedRoles={[2, 3]}>
+            <CheckerHomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/checker/dispatch"
+        element={
+          <ProtectedRoute allowedRoles={[2, 3]}>
+            <CheckerHomePage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Admin Routes */}
+      <Route
+        path="/admin"
+        element={
+          <ProtectedRoute allowedRoles={[3]}>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Dashboard Route */}
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Default redirect */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="*" element={<Navigate to="/login" replace />} />
+    </Routes>
+  );
+}
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <AuthProvider>
+        <VolunteerProvider>
+          <AppRoutes />
+        </VolunteerProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 

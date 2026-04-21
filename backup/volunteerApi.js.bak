@@ -1,0 +1,82 @@
+// Backup of volunteerApi.js
+// Created by assistant
+
+// ============================================
+// VOLUNTEER MANAGEMENT SYSTEM - API SERVICE
+// Didar Mubarak Pakistan
+// ============================================
+
+import { tokenService } from './tokenService';
+import {
+  VolunteerStatus,
+  PrintStatus,
+  AccessLevel,
+} from '../types/volunteer';
+import { EVENTS, DUTY_TYPES, REGIONS, DATA_SOURCES } from '../constants/volunteerConstants';
+
+const API_BASE_URL = 'https://api-volunteer.azurewebsites.net';
+const USE_MOCK_API = true; // Enable mock mode for development
+
+// ============================================
+// MOCK DATA GENERATOR
+// ============================================
+
+const getAccessLevelName = (level) => {
+  const names = {
+    [AccessLevel.STAGE]: 'Stage',
+    [AccessLevel.PANDAL]: 'Pandal',
+    [AccessLevel.OUTSIDE_HOLDING_AREA]: 'Outside Holding Area',
+    [AccessLevel.OUTSIDE_AREA]: 'Outside Area',
+    [AccessLevel.HEALTH_AREA]: 'Health Area',
+  };
+  return names[level] || `Level ${level}`;
+};
+
+const generateMockVolunteers = (count = 50) => {
+  const statuses = [
+    VolunteerStatus.VALID,
+    VolunteerStatus.PENDING,
+    VolunteerStatus.DISCREPANT,
+    VolunteerStatus.APPROVED,
+    VolunteerStatus.PRINTED,
+  ];
+  
+  const volunteers = [];
+  
+  for (let i = 1; i <= count; i++) {
+    const region = REGIONS[Math.floor(Math.random() * REGIONS.length)].value;
+    const event = EVENTS[Math.floor(Math.random() * EVENTS.length)];
+    const dutyType = DUTY_TYPES[Math.floor(Math.random() * DUTY_TYPES.length)];
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    const source = DATA_SOURCES[Math.floor(Math.random() * DATA_SOURCES.length)].value;
+    
+    volunteers.push({
+      id: `vol-${i}`,
+      volunteerId: `VID-${String(i).padStart(6, '0')}`,
+      cnic: `${12345 + i}-${1234567 + i}-${i % 10}`,
+      name: `Volunteer ${i}`,
+      eventId: event.id,
+      eventNumber: event.eventNumber,
+      dutyTypeId: dutyType.id,
+      dutyTypeName: dutyType.name,
+      accessLevel: dutyType.accessLevel,
+      accessLevelName: getAccessLevelName(dutyType.accessLevel),
+      region,
+      source,
+      sourceEntityId: `source-${i}`,
+      sourceEntityName: `Source Entity ${i}`,
+      uploadBatchId: `batch-${Math.ceil(i / 10)}`,
+      status,
+      validationErrors: [],
+      printStatus: status === VolunteerStatus.PRINTED ? PrintStatus.PRINTED : PrintStatus.NOT_PRINTED,
+      cnicVerified: status !== VolunteerStatus.PENDING,
+      createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+    });
+  }
+  
+  return volunteers;
+};
+
+let mockVolunteers = generateMockVolunteers(100);
+
+// (rest of original file omitted in backup)
