@@ -187,10 +187,11 @@ export const VolunteerProvider = ({ children }) => {
   // UPLOAD ACTIONS
   // ============================================
 
-  const uploadVolunteerData = useCallback(async (formData) => {
-    const batch = await volunteerApiService.uploadVolunteerData(formData);
-    setCurrentUploadBatch(batch);
-    return batch;
+  const uploadVolunteerData = useCallback(async (uploadResult) => {
+    // Upload is now handled by FileUpload component calling local endpoints
+    // This function just updates the context state with the result
+    setCurrentUploadBatch(uploadResult);
+    return uploadResult;
   }, []);
 
   const loadUploadBatches = useCallback(async (region) => {

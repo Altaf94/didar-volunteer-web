@@ -8,7 +8,7 @@ import { Upload, FileSpreadsheet, X, CheckCircle, AlertCircle } from 'lucide-rea
 import { colors } from '../../theme';
 import { REGIONS, DATA_SOURCES } from '../../constants/volunteerConstants';
 import { tokenService } from '../../services/tokenService';
-import { parseExcelFile, validateExcelFormat } from '../../utils/excelParser';
+import { parseExcelFile, validateExcelFormat, convertExcelToVolunteerData } from '../../utils/excelParser';
 import './FileUpload.css';
 
 const FileUpload = ({
@@ -352,17 +352,19 @@ const FileUpload = ({
     setIsUploading(true);
 
     try {
-      // Register import with backend before uploading file contents
-      const token = await tokenService.getValidAccessToken();
-      let userId = null;
-      try {
-        const payload = JSON.parse(tokenService.safeBase64Decode(token.split('.')[1]));
-        userId = payload.user_id || payload.id || payload.sub || null;
-      } catch (e) {
-        // ignore
+      // Parse Excel file and convert to volunteer data
+      const excelData = await parseExcelFile(selectedFile);
+      const volunteers = convertExcelToVolunteerData(excelData);
+
+      if (!volunteers || volunteers.length === 0) {
+        throw new Error('No valid volunteer data found in Excel file');
       }
 
-      const importResp = await fetch('http://127.0.0.1:8001/api/import-files', {
+      // Get token for authorization
+      const token = await tokenService.getValidAccessToken();
+
+      // Register import batch first
+      const importBatchResp = await fetch('http://127.0.0.1:8001/api/import-batch', {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -370,24 +372,22 @@ const FileUpload = ({
         },
         body: JSON.stringify({
           fileName: selectedFile.name,
-          recordCount: parsedRowCount || 0,
-          status: 'pending',
-          userId,
+          recordCount: volunteers.length,
         }),
       });
 
-      if (!importResp.ok) {
-        const txt = await importResp.text();
-        throw new Error(`Import API failed: ${importResp.status} ${txt}`);
+      if (!importBatchResp.ok) {
+        const txt = await importBatchResp.text();
+        throw new Error(`Import batch registration failed: ${importBatchResp.status} ${txt}`);
       }
 
-      const importResult = await importResp.json();
+      const importBatchResult = await importBatchResp.json();
 
       const result = await onUpload({
         file: selectedFile,
         region: effectiveRegion,
         source: selectedSource,
-        importMeta: importResult,
+        uploadMeta: importBatchResult,
       });
 
       onSuccess?.(result);
@@ -396,7 +396,6 @@ const FileUpload = ({
       setSelectedFile(null);
       setSelectedRegion(region || '');
       setSelectedSource('');
-      // sourceEntityId field removed
     } catch (error) {
       onError?.(error.message || 'Upload failed');
     } finally {
