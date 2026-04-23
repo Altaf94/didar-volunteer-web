@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { AlertCircle, CheckCircle, XCircle, Filter } from 'lucide-react';
-// Import Types and Mock Data
-import { mockDatabase, VolunteerRecord, RecordStatus, DiscrepancyType } from '../../types/mockDb';
+import { AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+// Import Mock Data
+import { mockDatabase, RecordStatus, DiscrepancyType } from '../../types/mockDb';
 // Import Helpers
 import { getStatusBadgeClass, canSubmitForPrinting } from '../../utils/checkerHelpers';
 // Import CSS
-import './CheckerReviewPage.css';
+import './CheckerReviewPage.css'; // CSS file same rahegi
 
 const CheckerReviewPage = () => {
-  const [records, setRecords] = useState<VolunteerRecord[]>([]);
-  const [filter, setFilter] = useState<'ALL' | 'DISCREPANT_1' | 'DISCREPANT_2'>('ALL');
+  const [records, setRecords] = useState([]);
+  const [filter, setFilter] = useState('ALL');
 
   useEffect(() => {
     // Initial Load of Data
@@ -29,7 +29,7 @@ const CheckerReviewPage = () => {
   const remainingDiscrepancies = records.filter(r => r.status === RecordStatus.DISCREPANT).length;
 
   // Resolve Logic: Same Event, Multiple Duties
-  const handleResolveDiscrepant1 = (keepId: string, rejectId: string) => {
+  const handleResolveDiscrepant1 = (keepId, rejectId) => {
     setRecords((prev) => prev.map((r) => {
       if (r.id === keepId) return { ...r, status: RecordStatus.APPROVED };
       if (r.id === rejectId) return { ...r, status: RecordStatus.REJECTED };
@@ -38,7 +38,7 @@ const CheckerReviewPage = () => {
   };
 
   // Resolve Logic: Multiple Events
-  const handleResolveDiscrepant2 = (id: string, action: 'APPROVE' | 'REJECT') => {
+  const handleResolveDiscrepant2 = (id, action) => {
     setRecords((prev) => prev.map((r) => {
       if (r.id === id) return { ...r, status: action === 'APPROVE' ? RecordStatus.APPROVED : RecordStatus.REJECTED };
       return r;
@@ -57,7 +57,6 @@ const CheckerReviewPage = () => {
       return;
     }
     alert("Success! Records moved to Print Queue.");
-    // navigate('/checker/print'); -> Implement React Router later
   };
 
   return (
@@ -80,7 +79,7 @@ const CheckerReviewPage = () => {
         <div style={{ backgroundColor: '#fff7ed', padding: '15px', borderRadius: '8px', borderLeft: '4px solid #ea580c', marginBottom: '20px' }}>
           <strong style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#9a3412' }}>
             <AlertCircle size={20} /> Attention: {remainingDiscrepancies} Discrepant records need manual review.
-          strong>
+          </strong>
         </div>
       )}
 
@@ -116,7 +115,7 @@ const CheckerReviewPage = () => {
                 <td style={{ textAlign: 'center' }}>
                   {record.status === RecordStatus.DISCREPANT && record.discrepancyType === DiscrepancyType.SAME_EVENT_MULTIPLE_DUTIES && (
                     <button className="btn btn-primary" style={{ fontSize: '12px', padding: '4px 8px' }}
-                      onClick={() => handleResolveDiscrepant1(record.id, record.conflictingRecordIds![0])}>
+                      onClick={() => handleResolveDiscrepant1(record.id, record.conflictingRecordIds[0])}>
                       Keep This & Reject Conflict
                     </button>
                   )}
