@@ -1,12 +1,12 @@
 // ============================================
-// CHECKER HELPER FUNCTIONS
+// CHECKER HELPER FUNCTIONS (JAVASCRIPT)
 // ============================================
 import { RecordStatus } from '../types/mockDb';
 
 /**
  * Returns professional CSS classes for status badges
  */
-export const getStatusBadgeClass = (status: RecordStatus): string => {
+export const getStatusBadgeClass = (status) => {
   switch (status) {
     case RecordStatus.DISCREPANT:
       return 'status-badge discrepant';
@@ -22,6 +22,6 @@ export const getStatusBadgeClass = (status: RecordStatus): string => {
 /**
  * Validates if the module can proceed to printing phase
  */
-export const canSubmitForPrinting = (totalDiscrepantCount: number): boolean => {
+export const canSubmitForPrinting = (totalDiscrepantCount) => {
   return totalDiscrepantCount === 0;
 };
