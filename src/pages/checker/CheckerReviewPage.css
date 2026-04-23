@@ -1,0 +1,69 @@
+/* src/pages/checker/CheckerReviewPage.css */
+
+.checker-review-page {
+  background-color: #f3f4f6; /* Light gray background like modern dashboards */
+  min-height: 100vh;
+  padding-bottom: 2rem;
+}
+
+/* Table Enhancements */
+.checker-review-page table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.checker-review-page th {
+  background-color: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 1rem;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.checker-review-page td {
+  padding: 1rem;
+  vertical-align: middle;
+  border-bottom: 1px solid #e2e8f0;
+  color: #1e293b;
+}
+
+/* Row Hover Effect */
+.checker-review-page tbody tr {
+  transition: background-color 0.2s ease-in-out;
+}
+
+.checker-review-page tbody tr:hover {
+  background-color: #f1f5f9;
+}
+
+/* Custom Buttons */
+.checker-review-page button {
+  transition: all 0.2s ease;
+}
+
+.checker-review-page button:active {
+  transform: scale(0.95);
+}
+
+/* Badge Styles */
+.status-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: inline-block;
+}
+
+.status-badge.discrepant {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.status-badge.approved {
+  background-color: #dcfce3;
+  color: #15803d;
+}
