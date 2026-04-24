@@ -24,13 +24,22 @@ const VolunteerUploadPage = () => {
   const { alert, showSuccess, showError, hideAlert } = useAlert();
 
   const handleUploadSuccess = (batch) => {
+    const totalRecords = batch?.uploadMeta?.totalRecords || batch?.recordCount || batch?.totalRecords || 0;
+    const validRecords = batch?.uploadMeta?.validRecords || batch?.validRecords || 0;
+    const discrepantRecords = batch?.uploadMeta?.discrepantRecords || batch?.discrepantRecords || 0;
+
     showSuccess(
       'Upload Successful',
-      `${batch.totalRecords} records processed. ${batch.validRecords} valid, ${batch.discrepantRecords} need review.`
+      `${totalRecords} records processed. ${validRecords} valid, ${discrepantRecords} need review.`
     );
-    
+
     setTimeout(() => {
-      navigate('/maker/review', { state: { batchId: batch.id } });
+      const batchId = batch?.uploadMeta?.importBatch?.id || batch?.id || null;
+      if (batchId) {
+        navigate('/maker/review', { state: { batchId } });
+      } else {
+        navigate('/maker');
+      }
     }, 2000);
   };
 

@@ -53,6 +53,38 @@ class VolunteerApiService {
     }
   }
 
+  // POST simplified maker-approved array to /api/maker-approved
+  async postMakerApprovedArray(recordsArray) {
+    const url = `${this.baseUrl}/api/maker-approved`;
+    const token = tokenService.getAccessToken();
+    try {
+      // eslint-disable-next-line no-console
+      console.debug('postMakerApprovedArray POST', { url, count: (recordsArray || []).length });
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(recordsArray),
+      });
+
+      if (!resp.ok) {
+        const txt = await resp.text().catch(() => '');
+        throw new Error(txt || `HTTP ${resp.status}`);
+      }
+
+      const json = await resp.json().catch(() => null);
+      // eslint-disable-next-line no-console
+      console.debug('postMakerApprovedArray response', { status: resp.status, json });
+      return json;
+    } catch (err) {
+      console.error('postMakerApprovedArray error:', err);
+      throw err;
+    }
+  }
+
 
 
   // ============================================
@@ -70,6 +102,20 @@ class VolunteerApiService {
     return this.makeRequest('/api/volunteers/submit', {
       method: 'POST',
       body: JSON.stringify({ volunteerIds }),
+    });
+  }
+
+  async createRecord(record) {
+    return this.makeRequest('/api/volunteers/record', {
+      method: 'POST',
+      body: JSON.stringify(record),
+    });
+  }
+
+  async getVolunteersByImportOrUser(data) {
+    return this.makeRequest('/api/volunteers/by-import-or-user', {
+      method: 'POST',
+      body: JSON.stringify(data),
     });
   }
 

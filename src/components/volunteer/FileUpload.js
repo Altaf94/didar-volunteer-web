@@ -80,7 +80,7 @@ const FileUpload = ({
         let localEventsSamePassed = true;
         let capacityErrors = [];
         // list of validation steps
-        const checks = ['FORMAT', 'ROW_COUNT', 'DUPLICATES', 'CNIC_FORMAT', 'EVENTS_SAME', 'EVENT_CAPACITY'];
+        const checks = ['FORMAT', 'ROW_COUNT', 'CNIC_FORMAT', 'EVENTS_SAME', 'EVENT_CAPACITY'];
         const errors = [];
 
         checks.forEach((check) => {
@@ -94,27 +94,6 @@ const FileUpload = ({
             case 'ROW_COUNT': {
               if (!data || data.length < 2) {
                 errors.push('No data rows found');
-              }
-              break;
-            }
-            case 'DUPLICATES': {
-              try {
-                const rows = data.slice(1);
-                const cnicIndex = (data[0] || []).map(h => h?.toString().toLowerCase()).indexOf('cnic');
-                if (cnicIndex >= 0) {
-                  const seen = new Set();
-                  const dupes = new Set();
-                  rows.forEach((r) => {
-                    const val = r[cnicIndex]?.toString().trim();
-                    if (val) {
-                      if (seen.has(val)) dupes.add(val);
-                      else seen.add(val);
-                    }
-                  });
-                  if (dupes.size > 0) errors.push(`Duplicate CNIC(s): ${Array.from(dupes).slice(0,5).join(', ')}`);
-                }
-              } catch (e) {
-                // ignore duplicate check failures
               }
               break;
             }
@@ -356,12 +335,52 @@ const FileUpload = ({
       const excelData = await parseExcelFile(selectedFile);
       const volunteers = convertExcelToVolunteerData(excelData);
 
+      // debug: show parsed volunteers and incoming headers to verify mapping
+      // eslint-disable-next-line no-console
+      console.debug('Excel headers:', excelData && excelData[0]);
+      // eslint-disable-next-line no-console
+      console.debug('Parsed volunteers (first 20):', volunteers.slice(0, 20));
+
       if (!volunteers || volunteers.length === 0) {
         throw new Error('No valid volunteer data found in Excel file');
       }
 
-      // Get token for authorization
+      // CNIC_USAGE: check that CNICs exist in registration table before uploading
+      const cnicApiBase = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8001';
+      const cnicTokenForCheck = await tokenService.getValidAccessToken();
+      const cnicCheckHeaders = { 'Content-Type': 'application/json' };
+      if (cnicTokenForCheck) cnicCheckHeaders.Authorization = `Bearer ${cnicTokenForCheck}`;
+      const cnicsToCheck = [...new Set(volunteers.map(v => v.cnic.replace(/-/g, '')).filter(Boolean))];
+      let notFoundCnics = new Set();
+      if (cnicsToCheck.length > 0) {
+        const cnicResp = await fetch(`${cnicApiBase}/api/cnic-usage/batch`, {
+          method: 'POST',
+          headers: cnicCheckHeaders,
+          body: JSON.stringify({ cnics: cnicsToCheck }),
+        });
+        if (!cnicResp.ok) {
+          const txt = await cnicResp.text().catch(() => '');
+          throw new Error(`CNIC usage check failed: ${cnicResp.status} ${txt}`);
+        }
+        const cnicResult = await cnicResp.json().catch(() => null);
+        // Extract list of CNICs not found in registration table
+        const notFoundList = Array.isArray(cnicResult?.notFound) ? cnicResult.notFound : (cnicResult?.not_found || []);
+        notFoundCnics = new Set(notFoundList.map(c => String(c).replace(/-/g, '')));
+        // Continue with upload even if some CNICs are not found in registration table
+      }
+
+      // Get token for authorization and extract userId from token payload
       const token = await tokenService.getValidAccessToken();
+      let userId = null;
+      try {
+        const payloadPart = token?.split('.')?.[1];
+        if (payloadPart) {
+          const payload = JSON.parse(tokenService.safeBase64Decode(payloadPart));
+          userId = payload.user_id || payload.id || payload.sub || null;
+        }
+      } catch (e) {
+        // ignore
+      }
 
       // Register import batch first
       const importBatchResp = await fetch('http://127.0.0.1:8001/api/import-batch', {
@@ -373,6 +392,7 @@ const FileUpload = ({
         body: JSON.stringify({
           fileName: selectedFile.name,
           recordCount: volunteers.length,
+          userId,
         }),
       });
 
@@ -382,12 +402,64 @@ const FileUpload = ({
       }
 
       const importBatchResult = await importBatchResp.json();
+      // determine import id from response (backend returns importFileId)
+      const importId = importBatchResult?.importFileId ?? importBatchResult?.id ?? importBatchResult?.import_id ?? null;
+
+      // Send all records in a single batch to /api/volunteers/records
+      const recordsUrl = 'http://127.0.0.1:8001/api/volunteers/records';
+      const recordsPayload = volunteers.map(v => {
+        const cnicNormalized = v.cnic.replace(/-/g, '');
+        const isRegistered = !notFoundCnics.has(cnicNormalized);
+        return {
+          Sno: v.rowNumber,
+          userId: userId,
+          cnic: v.cnic,
+          name: v.name,
+          // send descriptive strings for event, accessLevel and dutyType when available
+          event: v.eventName && v.eventName.length ? v.eventName : (v.eventNumber != null ? String(v.eventNumber) : ''),
+          accessLevel: v.accessLevelName && v.accessLevelName.length ? v.accessLevelName : (v.accessLevel != null ? String(v.accessLevel) : ''),
+          dutyType: v.dutyType != null ? String(v.dutyType) : '',
+          importId: importId,
+          decisionStatus: 'pending',
+          register: isRegistered ? 'Yes' : 'No',
+        };
+      });
+
+      // debug: inspect payload to verify accessLevel/dutyType presence
+      // eslint-disable-next-line no-console
+      console.debug('Uploading recordsPayload:', recordsPayload);
+
+      const batchResp = await fetch(recordsUrl, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(recordsPayload),
+      });
+
+      if (!batchResp.ok) {
+        const txt = await batchResp.text().catch(() => '');
+        throw new Error(`Batch upload failed: ${batchResp.status} ${txt}`);
+      }
+
+      const batchResult = await batchResp.json().catch(() => null);
+      const totalRecords = recordsPayload.length;
+      const validRecords = batchResult?.validRecords ?? batchResult?.successCount ?? totalRecords;
+      const discrepantRecords = batchResult?.discrepantRecords ?? batchResult?.failedCount ?? (totalRecords - validRecords);
 
       const result = await onUpload({
         file: selectedFile,
         region: effectiveRegion,
         source: selectedSource,
-        uploadMeta: importBatchResult,
+        uploadMeta: {
+          importBatch: importBatchResult,
+          totalRecords,
+          validRecords,
+          discrepantRecords,
+          batchResult,
+          recordsPayload,
+        },
       });
 
       onSuccess?.(result);

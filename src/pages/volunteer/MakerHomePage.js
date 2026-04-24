@@ -22,6 +22,8 @@ import { SummaryCard } from '../../components/volunteer/StatsCard';
 import { colors } from '../../theme';
 import { useVolunteer } from '../../context/VolunteerContext';
 import { useAuth } from '../../context/AuthContext';
+import volunteerApiService from '../../services/volunteerApi';
+import { tokenService } from '../../services/tokenService';
 import { VolunteerStatus } from '../../types/volunteer';
 import { getRegionLabel } from '../../constants/volunteerConstants';
 import './MakerHomePage.css';
@@ -29,6 +31,7 @@ import './MakerHomePage.css';
 const MakerHomePage = () => {
   const navigate = useNavigate();
   const [refreshing, setRefreshing] = useState(false);
+  const initialLoadRef = React.useRef(false);
 
   const {
     volunteers,
@@ -40,9 +43,16 @@ const MakerHomePage = () => {
     loadUploadBatches,
   } = useVolunteer();
 
+  const [importGroups, setImportGroups] = useState({});
+  const importIdsSet = new Set(Object.keys(importGroups).map(id => String(id)));
+  const pendingImportIds = Object.keys(importGroups).filter((id) => id && id !== 'unknown');
+
   const { logout } = useAuth();
 
   useEffect(() => {
+    // Guard against React.StrictMode double-invocation in development
+    if (initialLoadRef.current) return;
+    initialLoadRef.current = true;
     loadData();
   }, []);
 
@@ -50,7 +60,39 @@ const MakerHomePage = () => {
     await Promise.all([
       loadVolunteers(),
       loadUploadBatches(),
+      loadByImportOrUser(),
     ]);
+  };
+
+  const loadByImportOrUser = async () => {
+    try {
+      // extract user id from token
+      let userId = null;
+      const token = tokenService.getAccessToken();
+      try {
+        const payloadPart = token?.split('.')?.[1];
+        if (payloadPart) {
+          const payload = JSON.parse(tokenService.safeBase64Decode(payloadPart));
+          userId = payload.user_id || payload.id || payload.sub || null;
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      if (!userId) return;
+
+      const resp = await volunteerApiService.getVolunteersByImportOrUser({ userId });
+      // expect array of records with import_id
+      const groups = {};
+      (resp || []).forEach((r) => {
+        const key = r.import_id ?? r.importId ?? r.importFileId ?? 'unknown';
+        if (!groups[key]) groups[key] = [];
+        groups[key].push(r);
+      });
+      setImportGroups(groups);
+    } catch (err) {
+      console.error('Failed to load by import or user', err);
+    }
   };
 
   const onRefresh = useCallback(async () => {
@@ -59,10 +101,19 @@ const MakerHomePage = () => {
     setRefreshing(false);
   }, []);
 
-  // Calculate statistics
+  // Calculate statistics based on recordStatus from API
   const validCount = volunteers.filter(v => v.status === VolunteerStatus.VALID).length;
-  const pendingCount = volunteers.filter(v => v.status === VolunteerStatus.PENDING).length;
-  const submittedCount = volunteers.filter(v => v.status === VolunteerStatus.SUBMITTED).length;
+
+  // Pending = import batches where at least one record still has recordStatus "maker"
+  const pendingCount = Object.values(importGroups).filter((recs) =>
+    recs.some((r) => (r.recordStatus || r.record_status || '').toLowerCase() === 'maker')
+  ).length;
+
+  // Submitted = import batches where all records have moved past "maker" (e.g. "checker")
+  const submittedCount = Object.values(importGroups).filter((recs) =>
+    recs.length > 0 &&
+    recs.every((r) => (r.recordStatus || r.record_status || '').toLowerCase() !== 'maker')
+  ).length;
 
   const handleLogout = () => {
     logout();
@@ -87,17 +138,6 @@ const MakerHomePage = () => {
           <div className="summary-row">
             <div
               className="summary-card-wrapper"
-              onClick={() => navigate('/maker/review', { state: { status: VolunteerStatus.VALID } })}
-            >
-              <SummaryCard
-                title="Valid Records"
-                value={validCount}
-                icon={<CheckCircle size={24} color={colors.success} />}
-                color={colors.success}
-              />
-            </div>
-            <div
-              className="summary-card-wrapper"
               onClick={() => navigate('/maker/review', { state: { status: VolunteerStatus.PENDING } })}
             >
               <SummaryCard
@@ -107,8 +147,6 @@ const MakerHomePage = () => {
                 color={colors.info}
               />
             </div>
-          </div>
-          <div className="summary-row">
             <div
               className="summary-card-wrapper"
               onClick={() => navigate('/maker/review', { state: { status: VolunteerStatus.SUBMITTED } })}
@@ -120,10 +158,8 @@ const MakerHomePage = () => {
                 color={colors.primary}
               />
             </div>
-            <div className="summary-card-wrapper">
-              {/* empty placeholder to keep layout balanced */}
-            </div>
           </div>
+          
         </div>
 
         {/* Quick Actions */}
@@ -150,50 +186,94 @@ const MakerHomePage = () => {
           </div>
         </section>
 
-        {/* Recent Batches */}
+        {/* Recent Uploads (now includes import summary cards) */}
         <section className="section">
           <div className="section-header">
             <h2 className="section-title">Recent Uploads</h2>
             <button className="view-all-btn">View All</button>
           </div>
 
-          {uploadBatches.length === 0 ? (
-            <div className="empty-state">
-              <FileSpreadsheet size={40} color={colors.textMuted} />
-              <p className="empty-text">No uploads yet</p>
-              <p className="empty-subtext">
-                Upload your first Excel file to get started
-              </p>
-            </div>
-          ) : (
-            <div className="batches-list">
-              {uploadBatches.slice(0, 5).map((batch) => (
-                <div
-                  key={batch.id}
-                  className="batch-card"
-                  onClick={() => navigate('/maker/review', { state: { batchId: batch.id } })}
-                >
-                  <div className="batch-icon">
-                    <FileSpreadsheet size={24} color={colors.primary} />
+          <div className="uploads-container">
+            {uploadBatches.length === 0 && Object.keys(importGroups).length === 0 ? (
+              <div className="empty-state">
+                <FileSpreadsheet size={40} color={colors.textMuted} />
+                <p className="empty-text">No uploads yet</p>
+                <p className="empty-subtext">
+                  Upload your first Excel file to get started
+                </p>
+              </div>
+            ) : (
+              <>
+                {uploadBatches.length > 0 && (
+                  <div className="batches-list">
+                    {uploadBatches
+                      .filter(b => !importIdsSet.has(String(b.id)))
+                      .slice(0, 5)
+                      .map((batch) => (
+                      <div
+                        key={batch.id}
+                        className="batch-card"
+                        onClick={() => navigate('/maker/review', { state: { batchId: batch.id } })}
+                      >
+                        <div className="batch-icon">
+                          <FileSpreadsheet size={24} color={colors.primary} />
+                        </div>
+                        <div className="batch-content">
+                          <h4 className="batch-filename">{batch.fileName}</h4>
+                          <p className="batch-meta">
+                            {batch.totalRecords} records • {getRegionLabel(batch.region)}
+                          </p>
+                        </div>
+                        <div className="batch-stats">
+                          <span className="batch-stat valid">{batch.validRecords} valid</span>
+                          {batch.discrepantRecords > 0 && (
+                            <span className="batch-stat discrepant">{batch.discrepantRecords} issues</span>
+                          )}
+                        </div>
+                        <ChevronRight size={20} color={colors.textMuted} />
+                      </div>
+                    ))}
                   </div>
-                  <div className="batch-content">
-                    <h4 className="batch-filename">{batch.fileName}</h4>
-                    <p className="batch-meta">
-                      {batch.totalRecords} records • {getRegionLabel(batch.region)}
-                    </p>
+                )}
+
+                {Object.keys(importGroups).length > 0 && (
+                  <div className="import-groups-grid">
+                    {Object.entries(importGroups).filter(([, recs]) =>
+                      recs.some((r) => (r.recordStatus || r.record_status || '').toLowerCase() === 'maker')
+                    ).map(([importId, records]) => {
+                      const batchMeta = uploadBatches.find(b => String(b.id) === String(importId));
+                      const total = batchMeta?.totalRecords ?? records.length;
+                      const fileName = batchMeta?.fileName ?? batchMeta?.file_name ?? '';
+
+                      return (
+                        <div key={importId} className="import-summary-card">
+                          <div className="import-summary-top">
+                            <div className="import-id">Import ID: <strong>{importId}</strong></div>
+                            {fileName && <div className="import-filename">{fileName}</div>}
+                          </div>
+                          <div className="import-summary-body">
+                            <div className="import-count">{total}</div>
+                            <div className="import-count-label">Total Records</div>
+                          </div>
+                          <div className="import-summary-actions">
+                            <button
+                              className="view-btn"
+                              onClick={() => navigate('/maker/review', { state: { batchId: importId } })}
+                            >
+                              View
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="batch-stats">
-                    <span className="batch-stat valid">{batch.validRecords} valid</span>
-                    {batch.discrepantRecords > 0 && (
-                      <span className="batch-stat discrepant">{batch.discrepantRecords} issues</span>
-                    )}
-                  </div>
-                  <ChevronRight size={20} color={colors.textMuted} />
-                </div>
-              ))}
-            </div>
-          )}
+                )}
+              </>
+            )}
+          </div>
         </section>
+
+        
 
         {/* Refresh Button */}
         <button className="refresh-btn" onClick={onRefresh} disabled={refreshing}>

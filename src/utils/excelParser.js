@@ -58,14 +58,36 @@ export const convertExcelToVolunteerData = (data) => {
     headers.forEach((header, i) => {
       rowData[header] = row[i];
     });
-    
+
+    const findValue = (candidates) => {
+      if (!candidates || !candidates.length) return undefined;
+      const lcCandidates = candidates.map(c => c.toString().toLowerCase());
+      for (const key of Object.keys(rowData)) {
+        const lck = (key || '').toString().toLowerCase();
+        for (const cand of lcCandidates) {
+          if (lck.includes(cand)) return rowData[key];
+        }
+      }
+      return undefined;
+    };
+
+    const rawCnic = findValue(['cnic']) || '';
+    const rawName = findValue(['name', 'full name', 'fullname']) || '';
+    const rawEventNumber = findValue(['event_number', 'eventnumber', 'event no', 'eventno', 'event']) || '';
+    const rawEventName = findValue(['event_name', 'eventname', 'event title', 'event title', 'event']) || '';
+    const rawAccessLevel = findValue(['access_level', 'accesslevel', 'access level', 'access']) || '';
+    const rawAccessLevelName = findValue(['access_level', 'accesslevel', 'access level', 'access', 'accesslevel_name']) || '';
+    const rawDuty = findValue(['duty_type', 'dutytype', 'duty type', 'duty']) || '';
+
     return {
       rowNumber: index + 2,
-      cnic: rowData.cnic?.toString() || '',
-      name: rowData.name?.toString() || '',
-      eventNumber: parseInt(rowData.event_number || rowData.eventnumber || rowData.event, 10) || 1,
-      dutyType: rowData.duty_type || rowData.dutytype || rowData.duty || '',
-      accessLevel: parseInt(rowData.access_level || rowData.accesslevel, 10) || 1,
+      cnic: rawCnic?.toString() || '',
+      name: rawName?.toString() || '',
+      eventNumber: (() => { const n = parseInt(rawEventNumber, 10); return Number.isNaN(n) ? null : n; })(),
+      eventName: rawEventName?.toString() || (rawEventNumber?.toString() || ''),
+      dutyType: rawDuty?.toString() || '',
+      accessLevel: (() => { const n = parseInt(rawAccessLevel, 10); return Number.isNaN(n) ? null : n; })(),
+      accessLevelName: rawAccessLevelName?.toString() || rawAccessLevel?.toString() || '',
     };
   }).filter(row => row.cnic);
 };

@@ -2,10 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { VolunteerProvider } from './context/VolunteerContext';
+import LoadingProvider from './context/LoadingProvider';
 
 // Pages
 import LoginPage from './pages/auth/LoginPage';
 import MakerHomePage from './pages/volunteer/MakerHomePage';
+import MakerReviewPage from './pages/volunteer/MakerReviewPage';
 import CheckerHomePage from './pages/volunteer/CheckerHomePage';
 import VolunteerUploadPage from './pages/volunteer/VolunteerUploadPage';
 import DashboardPage from './pages/volunteer/DashboardPage';
@@ -105,7 +107,7 @@ function AppRoutes() {
         path="/maker/review"
         element={
           <ProtectedRoute allowedRoles={[1, 3]}>
-            <MakerHomePage />
+            <MakerReviewPage />
           </ProtectedRoute>
         }
       />
@@ -176,7 +178,9 @@ function App() {
     <Router>
       <AuthProvider>
         <VolunteerProvider>
-          <AppRoutes />
+          <LoadingProvider>
+            <AppRoutes />
+          </LoadingProvider>
         </VolunteerProvider>
       </AuthProvider>
     </Router>
