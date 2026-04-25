@@ -14,7 +14,7 @@ const MakerReviewPage = () => {
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [batchId, setBatchId] = useState(location?.state?.batchId ?? null);
-  const [viewMode, setViewMode] = useState('compact'); // 'compact' or 'detailed'
+  const [viewMode] = useState('compact'); // 'compact' or 'detailed'
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 13; // show 13 entries per page
   const [search, setSearch] = useState('');
@@ -27,7 +27,7 @@ const MakerReviewPage = () => {
       const q = params.get('batchId') || params.get('importId');
       if (q) setBatchId(q);
     }
-  }, [location]);
+  }, [location, batchId]);
 
   useEffect(() => {
     const load = async () => {
@@ -157,37 +157,64 @@ const MakerReviewPage = () => {
     return null;
   };
 
+  const [allApproved, setAllApproved] = useState(false);
+
+  useEffect(() => {
+    // determine approval status from records, and from localStorage fallback (in case backend hasn't updated yet)
+    try {
+      const approvedBatches = JSON.parse(localStorage.getItem('makerApproved_batches') || '[]');
+      const approvedIds = JSON.parse(localStorage.getItem('makerApproved_ids') || '[]');
+
+      const byStatus = records.length > 0 && records.every(r => {
+        const status = (r.decisionStatus || r.decision_status || '').toLowerCase();
+        return status === 'approved';
+      });
+
+      const byBatch = batchId && approvedBatches.includes(String(batchId));
+      const byIds = records.length > 0 && records.every(r => approvedIds.includes(String(getRecordId(r))));
+
+      setAllApproved(Boolean(byStatus || byBatch || byIds));
+    } catch (e) {
+      setAllApproved(false);
+    }
+  }, [records, batchId]);
+
   const handleApprove = async () => {
     if (!records.length) return;
 
-    // extract userId from token if available
-    let userId = null;
-    try {
-      const token = tokenService.getAccessToken();
-      const payloadPart = token?.split('.')?.[1];
-      if (payloadPart) {
-        const payload = JSON.parse(tokenService.safeBase64Decode(payloadPart));
-        userId = payload.user_id || payload.id || payload.sub || null;
-      }
-    } catch (e) {
-      // ignore
-    }
-
-    const eventField = fields.find(f => f.label === 'Event');
-    const accessField = fields.find(f => f.label === 'Access Level');
-    const dutyField = fields.find(f => f.label === 'Duty Type');
-
     setApproving(true);
     try {
-      setRecords((prev) => prev.map((record) => ({
-        ...record,
-        decisionStatus: 'approved',
-        decision_status: 'approved',
-        status: record.status || 'approved',
-      })));
+      // Prepare approval data - send records exactly as the maker is seeing them (no additions)
+      const approvalData = records;
+
+      // Call API to submit maker decisions
+      await volunteerApiService.submitMakerDecisions(approvalData);
+
+      // Persist approved batch/ids locally so returning users don't re-send
+      try {
+        const approvedBatches = JSON.parse(localStorage.getItem('makerApproved_batches') || '[]');
+        if (batchId && !approvedBatches.includes(String(batchId))) {
+          approvedBatches.push(String(batchId));
+          localStorage.setItem('makerApproved_batches', JSON.stringify(approvedBatches));
+        }
+        const approvedIds = JSON.parse(localStorage.getItem('makerApproved_ids') || '[]');
+        records.forEach(r => {
+          const id = String(getRecordId(r));
+          if (id && !approvedIds.includes(id)) approvedIds.push(id);
+        });
+        localStorage.setItem('makerApproved_ids', JSON.stringify(approvedIds));
+      } catch (e) {
+        // ignore storage errors
+      }
+
+      // Do not alter local `records` — keep them exactly as they were
+
+      // mark all approved locally and navigate after approval succeeds
+      setAllApproved(true);
       navigate('/maker');
     } catch (err) {
       console.error('Failed to approve records', err);
+      alert('Error approving records: ' + (err.message || err));
     } finally {
       setApproving(false);
     }
@@ -255,14 +282,18 @@ const MakerReviewPage = () => {
                 <button className="page-btn" disabled={currentPage >= Math.ceil(filteredRecords.length / pageSize)} onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredRecords.length / pageSize), p + 1))}>Next</button>
               </div>
               <div className="pagination-right">
-                <button
-                  className="approve-btn"
-                  onClick={handleApprove}
-                  disabled={approving || !records.length}
-                >
-                  <Check size={16} />
-                  {approving ? 'Approving...' : 'Approved'}
-                </button>
+                {allApproved ? (
+                  <div className="approved-message">✓ All records approved</div>
+                ) : (
+                  <button
+                    className="approve-btn"
+                    onClick={handleApprove}
+                    disabled={approving || !records.length}
+                  >
+                    <Check size={16} />
+                    {approving ? 'Approving...' : 'Approve'}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -291,14 +322,18 @@ const MakerReviewPage = () => {
                 <button className="page-btn" disabled={currentPage >= Math.ceil(filteredRecords.length / pageSize)} onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredRecords.length / pageSize), p + 1))}>Next</button>
               </div>
               <div className="pagination-right">
-                <button
-                  className="approve-btn"
-                  onClick={handleApprove}
-                  disabled={approving || !records.length}
-                >
-                  <Check size={16} />
-                  {approving ? 'Approving...' : 'Approved'}
-                </button>
+                {allApproved ? (
+                  <div className="approved-message">✓ All records approved</div>
+                ) : (
+                  <button
+                    className="approve-btn"
+                    onClick={handleApprove}
+                    disabled={approving || !records.length}
+                  >
+                    <Check size={16} />
+                    {approving ? 'Approving...' : 'Approve'}
+                  </button>
+                )}
               </div>
             </div>
           </div>

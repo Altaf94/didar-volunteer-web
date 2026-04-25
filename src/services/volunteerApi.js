@@ -4,12 +4,6 @@
 // ============================================
 
 import { tokenService } from './tokenService';
-import {
-  VolunteerStatus,
-  PrintStatus,
-  AccessLevel,
-} from '../types/volunteer';
-import { EVENTS, DUTY_TYPES, REGIONS, DATA_SOURCES } from '../constants/volunteerConstants';
 
 const API_BASE_URL = 'http://127.0.0.1:8001';
 
@@ -95,6 +89,13 @@ class VolunteerApiService {
     return this.makeRequest('/api/volunteers/approve', {
       method: 'POST',
       body: JSON.stringify(data),
+    });
+  }
+
+  async submitMakerDecisions(decisions) {
+    return this.makeRequest('/api/volunteers/maker-decisions', {
+      method: 'POST',
+      body: JSON.stringify(decisions),
     });
   }
 

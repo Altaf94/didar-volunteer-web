@@ -3,12 +3,12 @@
 // Page for uploading Excel files with volunteer data
 // ============================================
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/Header/Header';
 import FileUpload from '../../components/volunteer/FileUpload';
 import Alert from '../../components/Alert/Alert';
-import { colors } from '../../theme';
+// colors not used here
 import { useVolunteer } from '../../context/VolunteerContext';
 import { useAuth } from '../../context/AuthContext';
 import { getRegionLabel } from '../../constants/volunteerConstants';
@@ -17,7 +17,7 @@ import './VolunteerUploadPage.css';
 
 const VolunteerUploadPage = () => {
   const navigate = useNavigate();
-  const [isUploading, setIsUploading] = useState(false);
+  // upload state is handled inside FileUpload component
 
   const { uploadVolunteerData, userRegion } = useVolunteer();
   const { logout } = useAuth();

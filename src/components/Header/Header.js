@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ChevronDown, Bell, LogOut, Key } from 'lucide-react';
 import { colors } from '../../theme';
-import { tokenService } from '../../services/tokenService';
 import { useAuth } from '../../context/AuthContext';
 import { decodeJWT } from '../../utils/base64';
 import './Header.css';
@@ -85,8 +84,9 @@ const Header = ({
       case 1:
         return 'Maker';
       case 2:
-        return 'Checker';
       case 3:
+        return 'Checker';
+      case 4:
         return 'Admin';
       default:
         return 'User';

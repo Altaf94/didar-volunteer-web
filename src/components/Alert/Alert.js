@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { AlertCircle, CheckCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { colors } from '../../theme';
 import './Alert.css';
@@ -14,23 +14,25 @@ const Alert = ({
 }) => {
   const [visible, setVisible] = useState(isVisible);
 
+  const handleClose = useCallback(() => {
+    setVisible(false);
+    setTimeout(() => {
+      onClose?.();
+    }, 300);
+  }, [onClose]);
+
   useEffect(() => {
     setVisible(isVisible);
-    
+
     if (isVisible && autoClose) {
       const timer = setTimeout(() => {
         handleClose();
       }, autoCloseDelay);
       return () => clearTimeout(timer);
     }
-  }, [isVisible, autoClose, autoCloseDelay]);
+  }, [isVisible, autoClose, autoCloseDelay, handleClose]);
 
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(() => {
-      onClose?.();
-    }, 300);
-  };
+  
 
   const getStyles = () => {
     switch (type) {
@@ -80,7 +82,15 @@ const Alert = ({
             </div>
           )}
           <div className="alert-message" style={{ color: alertStyles.textColor }}>
-            {message}
+            {typeof message === 'string' && message.includes(' | ') ? (
+              <ul className="alert-message-list">
+                {message.split(' | ').map((item, i) => (
+                  <li key={i}>{item.trim()}</li>
+                ))}
+              </ul>
+            ) : (
+              message
+            )}
           </div>
         </div>
         <button

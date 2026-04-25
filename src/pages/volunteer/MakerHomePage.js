@@ -8,12 +8,9 @@ import { useNavigate } from 'react-router-dom';
 import {
   Upload,
   FileCheck,
-  AlertTriangle,
   Send,
   ChevronRight,
   FileSpreadsheet,
-  CheckCircle,
-  XCircle,
   Clock,
 } from 'lucide-react';
 import Header from '../../components/Header/Header';
@@ -34,7 +31,6 @@ const MakerHomePage = () => {
   const initialLoadRef = React.useRef(false);
 
   const {
-    volunteers,
     volunteersLoading,
     uploadBatches,
     uploadBatchesLoading,
@@ -45,26 +41,10 @@ const MakerHomePage = () => {
 
   const [importGroups, setImportGroups] = useState({});
   const importIdsSet = new Set(Object.keys(importGroups).map(id => String(id)));
-  const pendingImportIds = Object.keys(importGroups).filter((id) => id && id !== 'unknown');
 
   const { logout } = useAuth();
 
-  useEffect(() => {
-    // Guard against React.StrictMode double-invocation in development
-    if (initialLoadRef.current) return;
-    initialLoadRef.current = true;
-    loadData();
-  }, []);
-
-  const loadData = async () => {
-    await Promise.all([
-      loadVolunteers(),
-      loadUploadBatches(),
-      loadByImportOrUser(),
-    ]);
-  };
-
-  const loadByImportOrUser = async () => {
+  const loadByImportOrUser = useCallback(async () => {
     try {
       // extract user id from token
       let userId = null;
@@ -93,16 +73,30 @@ const MakerHomePage = () => {
     } catch (err) {
       console.error('Failed to load by import or user', err);
     }
-  };
+  }, []);
+
+  const loadData = useCallback(async () => {
+    await Promise.all([
+      loadVolunteers(),
+      loadUploadBatches(),
+      loadByImportOrUser(),
+    ]);
+  }, [loadVolunteers, loadUploadBatches, loadByImportOrUser]);
+
+  useEffect(() => {
+    // Guard against React.StrictMode double-invocation in development
+    if (initialLoadRef.current) return;
+    initialLoadRef.current = true;
+    loadData();
+  }, [loadData]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
-  }, []);
+  }, [loadData]);
 
   // Calculate statistics based on recordStatus from API
-  const validCount = volunteers.filter(v => v.status === VolunteerStatus.VALID).length;
 
   // Pending = import batches where at least one record still has recordStatus "maker"
   const pendingCount = Object.values(importGroups).filter((recs) =>

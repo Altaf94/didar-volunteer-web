@@ -4,7 +4,7 @@
 // ============================================
 
 import React, { useState, useRef } from 'react';
-import { Upload, FileSpreadsheet, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import { colors } from '../../theme';
 import { REGIONS, DATA_SOURCES } from '../../constants/volunteerConstants';
 import { tokenService } from '../../services/tokenService';
@@ -29,11 +29,11 @@ const FileUpload = ({
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [validationPassed, setValidationPassed] = useState(false);
-  const [validationErrors, setValidationErrors] = useState([]);
+  const [, setValidationErrors] = useState([]);
   const [isValidating, setIsValidating] = useState(false);
-  const [eventsSamePassed, setEventsSamePassed] = useState(false);
-  const [capacityPassed, setCapacityPassed] = useState(false);
-  const [parsedRowCount, setParsedRowCount] = useState(0);
+  const [, setEventsSamePassed] = useState(false);
+  const [, setCapacityPassed] = useState(false);
+  const [, setParsedRowCount] = useState(0);
   const fileInputRef = useRef(null);
   
 

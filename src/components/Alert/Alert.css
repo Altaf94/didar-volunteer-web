@@ -9,7 +9,7 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   transition: all 0.3s ease;
   max-width: 90%;
-  width: 400px;
+  width: 480px;
 }
 
 .alert-visible {
@@ -61,4 +61,18 @@
 
 .alert-close:hover {
   opacity: 1;
+}
+
+.alert-message-list {
+  margin: 4px 0 0 0;
+  padding-left: 18px;
+  list-style: disc;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.alert-message-list li {
+  font-size: 13px;
+  line-height: 1.4;
 }

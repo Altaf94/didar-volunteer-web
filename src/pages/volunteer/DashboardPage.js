@@ -10,7 +10,6 @@ import {
   Printer,
   Package,
   TrendingUp,
-  BarChart3,
 } from 'lucide-react';
 import Header from '../../components/Header/Header';
 import IsmailiLoader from '../../components/shared/IsmailiLoader';
@@ -24,7 +23,6 @@ import { useAuth } from '../../context/AuthContext';
 import { UserLevel } from '../../types/volunteer';
 import {
   getRegionLabel,
-  getAccessLevelLabel,
   getAccessLevelColor,
 } from '../../constants/volunteerConstants';
 import './DashboardPage.css';
@@ -36,7 +34,6 @@ const DashboardPage = () => {
   const {
     dashboardStats,
     dashboardLoading,
-    events,
     userLevel,
     userRegion,
     loadDashboardStats,
@@ -48,13 +45,13 @@ const DashboardPage = () => {
 
   useEffect(() => {
     loadDashboardStats();
-  }, []);
+  }, [loadDashboardStats]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadDashboardStats();
     setRefreshing(false);
-  }, []);
+  }, [loadDashboardStats]);
 
   const handleLogout = () => {
     logout();

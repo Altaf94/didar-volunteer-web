@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CustomInput from '../../components/CustomInput/CustomInput';
 import Alert from '../../components/Alert/Alert';
 import IsmailiLoader from '../../components/shared/IsmailiLoader';
-import { colors } from '../../theme';
+// colors not used in this component
 import { useAlert } from '../../hooks/useAlert';
 import { useAuth } from '../../context/AuthContext';
 import apiService from '../../services/api';
@@ -20,7 +20,7 @@ const LoginPage = () => {
   const [emailTouched, setEmailTouched] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
 
-  const { alert, showError, showSuccess, hideAlert } = useAlert();
+  const { alert, showError, hideAlert } = useAlert();
   const [emailAlert, setEmailAlert] = useState({ isVisible: false, message: '' });
   const { login, isAuthenticated } = useAuth();
 
@@ -45,7 +45,7 @@ const LoginPage = () => {
         const decoded = decodeJWT(token);
         if (decoded?.role === 1) {
           navigate('/maker');
-        } else if (decoded?.role === 2) {
+        } else if (decoded?.role === 2 || decoded?.role === 3) {
           navigate('/checker');
         } else {
           navigate('/admin');
@@ -138,7 +138,7 @@ const LoginPage = () => {
         
         const userRole = decodedToken.role;
 
-        // Only Admin (3), Checker (2), and Maker (1) can login
+        // Accept the role ids currently issued by the backend.
         if (userRole !== 1 && userRole !== 2 && userRole !== 3) {
           throw new Error(
             'Access denied. Only Makers, Checkers, and Administrators can access this system.'
@@ -161,7 +161,7 @@ const LoginPage = () => {
         // Route based on user role
         if (userRole === 1) {
           navigate('/maker');
-        } else if (userRole === 2) {
+        } else if (userRole === 2 || userRole === 3) {
           navigate('/checker');
         } else {
           navigate('/admin');

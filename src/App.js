@@ -35,9 +35,9 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     // Redirect based on role
     if (userRole === 1) {
       return <Navigate to="/maker" replace />;
-    } else if (userRole === 2) {
+    } else if (userRole === 2 || userRole === 3) {
       return <Navigate to="/checker" replace />;
-    } else if (userRole === 3) {
+    } else if (userRole === 4) {
       return <Navigate to="/admin" replace />;
     }
   }
@@ -62,9 +62,9 @@ const PublicRoute = ({ children }) => {
     // Redirect based on role
     if (userRole === 1) {
       return <Navigate to="/maker" replace />;
-    } else if (userRole === 2) {
+    } else if (userRole === 2 || userRole === 3) {
       return <Navigate to="/checker" replace />;
-    } else if (userRole === 3) {
+    } else if (userRole === 4) {
       return <Navigate to="/admin" replace />;
     }
     return <Navigate to="/maker" replace />;

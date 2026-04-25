@@ -55,10 +55,12 @@ export function initFetchInterceptor() {
   window.fetch.__loadingPatched = true;
 }
 
-export default {
+const loadingManager = {
   increment,
   decrement,
   subscribe,
   getCount,
   initFetchInterceptor,
 };
+
+export default loadingManager;

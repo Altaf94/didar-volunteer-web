@@ -43,23 +43,23 @@ const CheckerHomePage = () => {
 
   const { logout } = useAuth();
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     await Promise.all([
       loadVolunteers({ status: VolunteerStatus.SUBMITTED }),
       loadDashboardStats(),
       loadDispatchPackages(),
     ]);
-  };
+  }, [loadVolunteers, loadDashboardStats, loadDispatchPackages]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await loadData();
     setRefreshing(false);
-  }, []);
+  }, [loadData]);
 
   // Calculate statistics
   const submittedCount = volunteers.filter(v => v.status === VolunteerStatus.SUBMITTED).length;
