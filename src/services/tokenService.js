@@ -1,7 +1,7 @@
 // Token service for handling access and refresh tokens in React Web
 import { atob } from '../utils/base64';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8001';
+import { API_BASE_URL } from '../apiBaseUrl';
 
 class TokenService {
   static instance = null;

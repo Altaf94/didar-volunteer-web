@@ -7,6 +7,7 @@ import React, { useState, useRef } from 'react';
 import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import { colors } from '../../theme';
 import { REGIONS, DATA_SOURCES } from '../../constants/volunteerConstants';
+import { API_BASE_URL } from '../../apiBaseUrl';
 import { tokenService } from '../../services/tokenService';
 import { parseExcelFile, validateExcelFormat, convertExcelToVolunteerData } from '../../utils/excelParser';
 import './FileUpload.css';
@@ -157,7 +158,7 @@ const FileUpload = ({
           if (eventHeaderIndex >= 0 && accessHeaderIndex >= 0 && dutyHeaderIndex >= 0) {
             try {
               const token = await tokenService.getValidAccessToken();
-              const resp = await fetch('http://127.0.0.1:8001/api/event-access-level-duty-requirements', {
+              const resp = await fetch(`${API_BASE_URL}/api/event-access-level-duty-requirements`, {
                 headers: {
                   Authorization: `Bearer ${token}`,
                   'Content-Type': 'application/json',
@@ -346,7 +347,7 @@ const FileUpload = ({
       }
 
       // CNIC_USAGE: check that CNICs exist in registration table before uploading
-      const cnicApiBase = process.env.REACT_APP_API_URL || 'http://127.0.0.1:8001';
+      const cnicApiBase = API_BASE_URL;
       const cnicTokenForCheck = await tokenService.getValidAccessToken();
       const cnicCheckHeaders = { 'Content-Type': 'application/json' };
       if (cnicTokenForCheck) cnicCheckHeaders.Authorization = `Bearer ${cnicTokenForCheck}`;
@@ -383,7 +384,7 @@ const FileUpload = ({
       }
 
       // Register import batch first
-      const importBatchResp = await fetch('http://127.0.0.1:8001/api/import-batch', {
+      const importBatchResp = await fetch(`${API_BASE_URL}/api/import-batch`, {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -406,7 +407,7 @@ const FileUpload = ({
       const importId = importBatchResult?.importFileId ?? importBatchResult?.id ?? importBatchResult?.import_id ?? null;
 
       // Send all records in a single batch to /api/volunteers/records
-      const recordsUrl = 'http://127.0.0.1:8001/api/volunteers/records';
+      const recordsUrl = `${API_BASE_URL}/api/volunteers/records`;
       const recordsPayload = volunteers.map(v => {
         const cnicNormalized = v.cnic.replace(/-/g, '');
         const isRegistered = !notFoundCnics.has(cnicNormalized);

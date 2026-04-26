@@ -1,8 +1,7 @@
 // API service for handling all API calls
+import { API_BASE_URL } from '../apiBaseUrl';
 import { tokenService } from './tokenService';
 import { btoa } from '../utils/base64';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://api-mhip.azurewebsites.net';
 const USE_MOCK_API = false; // Set to true to use mock data instead of real API
 
 console.log('API Configuration:', {
