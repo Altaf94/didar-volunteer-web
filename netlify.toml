@@ -1,0 +1,17 @@
+[build]
+  command = "npm run build"
+  publish = "build"
+
+# Same-origin /api in the browser; Netlify proxies to Heroku (avoids CORS to Heroku).
+[[redirects]]
+  from = "/api/*"
+  to = "https://northen-volunteer-25070e7d956a.herokuapp.com/api/:splat"
+  status = 200
+  force = true
+
+# Health check is at API root, not /api/health
+[[redirects]]
+  from = "/health"
+  to = "https://northen-volunteer-25070e7d956a.herokuapp.com/health"
+  status = 200
+  force = true

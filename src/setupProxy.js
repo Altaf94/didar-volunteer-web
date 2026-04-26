@@ -36,16 +36,19 @@ function proxyTarget() {
   return DEFAULT_API;
 }
 
-module.exports = function(app) {
-  app.use(
-    '/api',
-    createProxyMiddleware({
-      target: proxyTarget(),
-      changeOrigin: true,
-      secure: true,
-      onProxyReq: (proxyReq, req, res) => {
-        console.log('Proxying:', req.method, req.path);
-      },
-    })
-  );
+function makeProxy() {
+  return {
+    target: proxyTarget(),
+    changeOrigin: true,
+    secure: true,
+    onProxyReq: (_proxyReq, req) => {
+      console.log('Proxying:', req.method, req.path);
+    },
+  };
+}
+
+module.exports = function (app) {
+  app.use('/api', createProxyMiddleware(makeProxy()));
+  // /health is on the API host root, not /api/health (testConnection in api.js)
+  app.use('/health', createProxyMiddleware(makeProxy()));
 };

@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://northen-volunteer-25070e7d956a.herokuapp.com/api/$1"
+    },
+    {
+      "source": "/health",
+      "destination": "https://northen-volunteer-25070e7d956a.herokuapp.com/health"
+    }
+  ]
+}
