@@ -9,6 +9,7 @@ import LoginPage from './pages/auth/LoginPage';
 import MakerHomePage from './pages/volunteer/MakerHomePage';
 import MakerReviewPage from './pages/volunteer/MakerReviewPage';
 import CheckerHomePage from './pages/volunteer/CheckerHomePage';
+import CheckerImportReviewPage from './pages/volunteer/CheckerImportReviewPage';
 import VolunteerUploadPage from './pages/volunteer/VolunteerUploadPage';
 import DashboardPage from './pages/volunteer/DashboardPage';
 
@@ -142,6 +143,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={[2, 3]}>
             <CheckerHomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/checker/import/:importId"
+        element={
+          <ProtectedRoute allowedRoles={[2, 3]}>
+            <CheckerImportReviewPage />
           </ProtectedRoute>
         }
       />

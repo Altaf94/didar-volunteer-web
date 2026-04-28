@@ -1,5 +1,5 @@
 // API service for handling all API calls
-import { API_BASE_URL } from '../apiBaseUrl';
+import { API_BASE_URL, HEALTH_CHECK_URL } from '../apiBaseUrl';
 import { tokenService } from './tokenService';
 import { btoa } from '../utils/base64';
 const USE_MOCK_API = false; // Set to true to use mock data instead of real API
@@ -97,8 +97,8 @@ class ApiService {
     }
 
     try {
-      console.log('Testing API connection to:', `${this.baseUrl}/health`);
-      const response = await fetch(`${this.baseUrl}/health`, {
+      console.log('Testing API connection to:', HEALTH_CHECK_URL);
+      const response = await fetch(HEALTH_CHECK_URL, {
         method: 'GET',
         headers: {
           Accept: 'application/json',

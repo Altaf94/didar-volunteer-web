@@ -6,6 +6,37 @@
 import { API_BASE_URL } from '../apiBaseUrl';
 import { tokenService } from './tokenService';
 
+/**
+ * These GET routes are not available on all backends. When unset/false, the app uses in-memory
+ * empty data (no network). Set to `true` in .env when your API implements:
+ * GET /api/volunteers, GET /api/volunteers/dashboard/stats, GET /api/volunteers/dispatch-packages
+ */
+const USE_HTTP_VOLUNTEER_LIST_DASHBOARD =
+  process.env.REACT_APP_VOLUNTEER_HTTP_LIST_DASHBOARD === 'true';
+
+function emptyVolunteersListResponse(filters = {}) {
+  const page = Number(filters.page) || 1;
+  const pageSize = Number(filters.pageSize) || 20;
+  return {
+    data: [],
+    pagination: { total: 0, page, pageSize },
+  };
+}
+
+function emptyDashboardStats() {
+  return {
+    totalRequired: 0,
+    totalReceived: 0,
+    receivedPercentage: 0,
+    totalPrinted: 0,
+    printedPercentage: 0,
+    totalDispatched: 0,
+    byRegion: [],
+    byAccessLevel: [],
+    lastUpdated: new Date().toISOString(),
+  };
+}
+
 // ============================================
 // API SERVICE CLASS
 // ============================================
@@ -98,6 +129,19 @@ class VolunteerApiService {
     });
   }
 
+  /** GET list grouped by import (checker role). */
+  async getMakerDecisions() {
+    return this.makeRequest('/api/volunteers/maker-decisions', { method: 'GET' });
+  }
+
+  /** Checker submits approve/reject for an import. */
+  async submitMakerDecisionsByImport(body) {
+    return this.makeRequest('/api/volunteers/maker-decisions/submit', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    });
+  }
+
   async submitVolunteers(volunteerIds) {
     return this.makeRequest('/api/volunteers/submit', {
       method: 'POST',
@@ -119,7 +163,108 @@ class VolunteerApiService {
     });
   }
 
+  // ============================================
+  // CHECKER / LIST + DASHBOARD
+  // (Expected response shapes match VolunteerContext)
+  // ============================================
 
+  buildQuery(filters = {}) {
+    const q = new URLSearchParams();
+    const entries = {
+      page: filters.page,
+      pageSize: filters.pageSize,
+      status: filters.status,
+      region: filters.region,
+      eventId: filters.eventId,
+      dutyTypeId: filters.dutyTypeId,
+    };
+    Object.entries(entries).forEach(([key, val]) => {
+      if (val !== undefined && val !== null && val !== '') {
+        q.set(key, String(val));
+      }
+    });
+    return q.toString();
+  }
+
+  async getVolunteers(filters = {}) {
+    if (!USE_HTTP_VOLUNTEER_LIST_DASHBOARD) {
+      return Promise.resolve(emptyVolunteersListResponse(filters));
+    }
+    const qs = this.buildQuery(filters);
+    const path = qs ? `/api/volunteers?${qs}` : '/api/volunteers';
+    return this.makeRequest(path, { method: 'GET' });
+  }
+
+  async getUploadBatches(region) {
+    const q = region ? `?region=${encodeURIComponent(region)}` : '';
+    return this.makeRequest(`/api/volunteers/upload-batches${q}`, { method: 'GET' });
+  }
+
+  async getDispatchPackages(region) {
+    if (!USE_HTTP_VOLUNTEER_LIST_DASHBOARD) {
+      return Promise.resolve([]);
+    }
+    const q = region ? `?region=${encodeURIComponent(region)}` : '';
+    return this.makeRequest(`/api/volunteers/dispatch-packages${q}`, { method: 'GET' });
+  }
+
+  async getDashboardStats(filters = {}) {
+    if (!USE_HTTP_VOLUNTEER_LIST_DASHBOARD) {
+      return Promise.resolve(emptyDashboardStats());
+    }
+    const qs = this.buildQuery(filters);
+    const path = qs ? `/api/volunteers/dashboard/stats?${qs}` : '/api/volunteers/dashboard/stats';
+    return this.makeRequest(path, { method: 'GET' });
+  }
+
+  async getLocalCouncils(region) {
+    const q = region ? `?region=${encodeURIComponent(region)}` : '';
+    return this.makeRequest(`/api/volunteers/local-councils${q}`, { method: 'GET' });
+  }
+
+  async getJamatKhanas(localCouncilId) {
+    if (localCouncilId == null || localCouncilId === '') {
+      return Promise.resolve([]);
+    }
+    return this.makeRequest(
+      `/api/volunteers/jamat-khanas?localCouncilId=${encodeURIComponent(localCouncilId)}`,
+      { method: 'GET' },
+    );
+  }
+
+  async createPrintBatch(data) {
+    return this.makeRequest('/api/volunteers/print-batches', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async printBadges(printBatchId) {
+    return this.makeRequest(`/api/volunteers/print-batches/${encodeURIComponent(printBatchId)}/print`, {
+      method: 'POST',
+    });
+  }
+
+  async generateCoveringSheet(printBatchId) {
+    return this.makeRequest(
+      `/api/volunteers/print-batches/${encodeURIComponent(printBatchId)}/covering-sheet`,
+      { method: 'GET' },
+    );
+  }
+
+  async prepareDispatchPackage(data) {
+    return this.makeRequest('/api/volunteers/dispatch-packages', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async dispatchPackage(packageId) {
+    return this.makeRequest(
+      `/api/volunteers/dispatch-packages/${encodeURIComponent(packageId)}/dispatch`,
+      { method: 'POST' },
+    );
+  }
 }
 
 const volunteerApiService = new VolunteerApiService();

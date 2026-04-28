@@ -9,10 +9,7 @@ import {
   FileCheck,
   Printer,
   Package,
-  ChevronRight,
-  CheckCircle,
   Clock,
-  Truck,
 } from 'lucide-react';
 import Header from '../../components/Header/Header';
 import IsmailiLoader from '../../components/shared/IsmailiLoader';
@@ -20,13 +17,20 @@ import { SummaryCard, RegionProgressCard } from '../../components/volunteer/Stat
 import { colors } from '../../theme';
 import { useVolunteer } from '../../context/VolunteerContext';
 import { useAuth } from '../../context/AuthContext';
-import { VolunteerStatus, PrintStatus, UserLevel } from '../../types/volunteer';
+import { VolunteerStatus, UserLevel } from '../../types/volunteer';
 import { getRegionLabel } from '../../constants/volunteerConstants';
+import volunteerApiService from '../../services/volunteerApi';
 import './CheckerHomePage.css';
+
+/** Auth token role for checker users who may load maker decision queue (per API). */
+const CHECKER_MAKER_DECISIONS_ROLE = 3;
 
 const CheckerHomePage = () => {
   const navigate = useNavigate();
   const [refreshing, setRefreshing] = useState(false);
+  const [makerDecisions, setMakerDecisions] = useState(null);
+  const [makerDecisionsLoading, setMakerDecisionsLoading] = useState(false);
+  const [makerDecisionsError, setMakerDecisionsError] = useState(null);
 
   const {
     volunteers,
@@ -41,15 +45,35 @@ const CheckerHomePage = () => {
     loadDispatchPackages,
   } = useVolunteer();
 
-  const { logout } = useAuth();
+  const { logout, userRole } = useAuth();
+
+  const loadMakerDecisions = useCallback(async () => {
+    if (userRole !== CHECKER_MAKER_DECISIONS_ROLE) return;
+    setMakerDecisionsLoading(true);
+    setMakerDecisionsError(null);
+    try {
+      const data = await volunteerApiService.getMakerDecisions();
+      setMakerDecisions(data);
+    } catch (err) {
+      console.error('Failed to load maker decisions:', err);
+      setMakerDecisionsError(err.message || 'Failed to load');
+      setMakerDecisions(null);
+    } finally {
+      setMakerDecisionsLoading(false);
+    }
+  }, [userRole]);
 
   const loadData = useCallback(async () => {
-    await Promise.all([
+    const tasks = [
       loadVolunteers({ status: VolunteerStatus.SUBMITTED }),
       loadDashboardStats(),
       loadDispatchPackages(),
-    ]);
-  }, [loadVolunteers, loadDashboardStats, loadDispatchPackages]);
+    ];
+    if (userRole === CHECKER_MAKER_DECISIONS_ROLE) {
+      tasks.push(loadMakerDecisions());
+    }
+    await Promise.all(tasks);
+  }, [loadVolunteers, loadDashboardStats, loadDispatchPackages, loadMakerDecisions, userRole]);
 
   useEffect(() => {
     loadData();
@@ -64,10 +88,13 @@ const CheckerHomePage = () => {
   // Calculate statistics
   const submittedCount = volunteers.filter(v => v.status === VolunteerStatus.SUBMITTED).length;
   const approvedCount = volunteers.filter(v => v.status === VolunteerStatus.APPROVED).length;
-  const printedCount = volunteers.filter(v => v.printStatus === PrintStatus.PRINTED).length;
-  const dispatchedCount = volunteers.filter(v => v.printStatus === PrintStatus.DISPATCHED).length;
 
   const isNationalLevel = userLevel === UserLevel.NATIONAL;
+
+  const byImportEntries =
+    makerDecisions?.byImportId && typeof makerDecisions.byImportId === 'object'
+      ? Object.entries(makerDecisions.byImportId)
+      : [];
 
   const handleLogout = () => {
     logout();
@@ -113,27 +140,6 @@ const CheckerHomePage = () => {
               />
             </div>
           </div>
-          <div className="summary-row">
-            <div className="summary-card-wrapper">
-              <SummaryCard
-                title="Printed"
-                value={printedCount}
-                icon={<CheckCircle size={24} color={colors.success} />}
-                color={colors.success}
-              />
-            </div>
-            <div
-              className="summary-card-wrapper"
-              onClick={() => navigate('/checker/dispatch')}
-            >
-              <SummaryCard
-                title="Dispatched"
-                value={dispatchedCount}
-                icon={<Truck size={24} color="#8B5CF6" />}
-                color="#8B5CF6"
-              />
-            </div>
-          </div>
         </div>
 
         {/* Quick Actions */}
@@ -158,19 +164,72 @@ const CheckerHomePage = () => {
               <p className="action-subtitle">{approvedCount} ready</p>
             </div>
           </div>
-
-          <div
-            className="action-card dispatch-card full-width"
-            onClick={() => navigate('/checker/dispatch')}
-          >
-            <Package size={32} color={colors.white} />
-            <div className="action-text">
-              <h3 className="action-title">Manage Dispatch</h3>
-              <p className="action-subtitle">Prepare & send packages</p>
-            </div>
-            <ChevronRight size={24} color={colors.white} />
-          </div>
         </section>
+
+        {/* GET /api/volunteers/maker-decisions (byImportId) — role 3, Recent Uploads layout */}
+        {userRole === CHECKER_MAKER_DECISIONS_ROLE && (
+          <section className="section recent-uploads-section">
+            <div className="section-header">
+              <h2 className="section-title">Recent Uploads</h2>
+              {byImportEntries.length > 0 && (
+                <button
+                  type="button"
+                  className="view-all-btn"
+                  onClick={() => {
+                    const [id, recs] = byImportEntries[0];
+                    navigate(`/checker/import/${encodeURIComponent(String(id))}`, {
+                      state: { makerRecords: recs },
+                    });
+                  }}
+                >
+                  View All
+                </button>
+              )}
+            </div>
+            {makerDecisionsError && (
+              <p className="recent-uploads-error" role="alert">
+                {makerDecisionsError}
+              </p>
+            )}
+            <div className="recent-uploads-panel">
+              {makerDecisionsLoading && !makerDecisions && (
+                <p className="recent-uploads-placeholder">Loading…</p>
+              )}
+              {!makerDecisionsLoading && !makerDecisionsError && byImportEntries.length === 0 && (
+                <p className="recent-uploads-placeholder">No recent uploads.</p>
+              )}
+              {byImportEntries.length > 0 && (
+                <div className="recent-uploads-grid">
+                  {byImportEntries.map(([importId, records]) => {
+                    const list = Array.isArray(records) ? records : [];
+                    return (
+                      <div key={importId} className="recent-upload-card">
+                        <p className="recent-upload-id-line">
+                          Import ID: <strong>{importId}</strong>
+                        </p>
+                        <div className="recent-upload-total" aria-label="Total records">
+                          {list.length}
+                        </div>
+                        <p className="recent-upload-total-label">Total Records</p>
+                        <button
+                          type="button"
+                          className="recent-upload-view-btn"
+                          onClick={() =>
+                            navigate(`/checker/import/${encodeURIComponent(String(importId))}`, {
+                              state: { makerRecords: list },
+                            })
+                          }
+                        >
+                          View
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Region Progress */}
         {isNationalLevel && dashboardStats?.byRegion && (

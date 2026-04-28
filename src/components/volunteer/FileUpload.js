@@ -12,6 +12,42 @@ import { tokenService } from '../../services/tokenService';
 import { parseExcelFile, validateExcelFormat, convertExcelToVolunteerData } from '../../utils/excelParser';
 import './FileUpload.css';
 
+/**
+ * From POST /api/cnic-usage/batch: builds the set of CNICs (digits only) that are *not* registered
+ * (should get register: "No" on /api/volunteers/records).
+ * New API: { success, results: [ { cnic, familyLevelDetails: { present }, form: { present } } ] } —
+ * "registered" if either present is true. Legacy: notFound / not_found arrays of CNICs.
+ */
+function buildNotFoundCnicsSet(cnicResult, cnicsToCheck) {
+  if (Array.isArray(cnicResult?.results)) {
+    if (cnicResult.results.length === 0) {
+      return new Set(cnicsToCheck);
+    }
+    const regByCnic = new Map();
+    cnicResult.results.forEach((row) => {
+      const key = String(row.cnic || '').replace(/-/g, '');
+      if (!key) return;
+      const isRegistered =
+        row.familyLevelDetails?.present === true || row.form?.present === true;
+      regByCnic.set(key, isRegistered);
+    });
+    const notFound = new Set();
+    cnicsToCheck.forEach((c) => {
+      if (regByCnic.get(c) !== true) {
+        notFound.add(c);
+      }
+    });
+    return notFound;
+  }
+  const notFoundList = Array.isArray(cnicResult?.notFound)
+    ? cnicResult.notFound
+    : cnicResult?.not_found;
+  if (!Array.isArray(notFoundList) || notFoundList.length === 0) {
+    return new Set();
+  }
+  return new Set(notFoundList.map((c) => String(c).replace(/-/g, '')));
+}
+
 const FileUpload = ({
   onUpload,
   region,
@@ -31,6 +67,8 @@ const FileUpload = ({
   const [dragActive, setDragActive] = useState(false);
   const [validationPassed, setValidationPassed] = useState(false);
   const [, setValidationErrors] = useState([]);
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [, setEventsSamePassed] = useState(false);
   const [, setCapacityPassed] = useState(false);
@@ -74,6 +112,11 @@ const FileUpload = ({
     setCapacityPassed(false);
     setParsedRowCount(0);
     setSelectedFile(file);
+    setFieldErrors((prev) => {
+      const copy = { ...prev };
+      delete copy.file;
+      return copy;
+    });
     setIsValidating(true);
     // parse and run validations
     parseExcelFile(file)
@@ -324,8 +367,21 @@ const FileUpload = ({
   const handleUpload = async () => {
     const effectiveRegion = isRegionDisabled ? (tokenService.getUserRegionId() || '') : selectedRegion;
 
-    if (!selectedFile || (!isRegionDisabled && !selectedRegion) || !selectedSource) {
-      onError?.('Please fill in all required fields');
+    setSubmitAttempted(true);
+    const nextFieldErrors = {};
+    if (!isRegionDisabled && !selectedRegion) {
+      nextFieldErrors.region = 'Region is required';
+    }
+    if (!selectedSource) {
+      nextFieldErrors.source = 'Data Source is required';
+    }
+    if (!selectedFile) {
+      nextFieldErrors.file = 'Excel file is required';
+    }
+    setFieldErrors(nextFieldErrors);
+
+    if (Object.keys(nextFieldErrors).length > 0) {
+      onError?.('Please select Region, Data Source, and file before uploading.');
       return;
     }
 
@@ -364,9 +420,7 @@ const FileUpload = ({
           throw new Error(`CNIC usage check failed: ${cnicResp.status} ${txt}`);
         }
         const cnicResult = await cnicResp.json().catch(() => null);
-        // Extract list of CNICs not found in registration table
-        const notFoundList = Array.isArray(cnicResult?.notFound) ? cnicResult.notFound : (cnicResult?.not_found || []);
-        notFoundCnics = new Set(notFoundList.map(c => String(c).replace(/-/g, '')));
+        notFoundCnics = buildNotFoundCnicsSet(cnicResult, cnicsToCheck);
         // Continue with upload even if some CNICs are not found in registration table
       }
 
@@ -422,7 +476,7 @@ const FileUpload = ({
           dutyType: v.dutyType != null ? String(v.dutyType) : '',
           importId: importId,
           decisionStatus: 'pending',
-          register: isRegistered ? 'Yes' : 'No',
+          register: isRegistered ? 'No' : 'Yes',
         };
       });
 
@@ -487,6 +541,11 @@ const FileUpload = ({
     setEventsSamePassed(false);
     setCapacityPassed(false);
     setParsedRowCount(0);
+    setFieldErrors((prev) => {
+      const copy = { ...prev };
+      copy.file = 'Excel file is required';
+      return copy;
+    });
   };
 
   return (
@@ -496,9 +555,17 @@ const FileUpload = ({
         <div className="file-upload-field">
           <label className="file-upload-label">Region *</label>
           <select
-            className="file-upload-select"
+            className={`file-upload-select${fieldErrors.region && submitAttempted ? ' file-upload-select-error' : ''}`}
             value={selectedRegion}
-            onChange={(e) => setSelectedRegion(e.target.value)}
+            onChange={(e) => {
+              const next = e.target.value;
+              setSelectedRegion(next);
+              setFieldErrors((prev) => {
+                const copy = { ...prev };
+                if (next) delete copy.region;
+                return copy;
+              });
+            }}
           >
             <option value="">Select Region</option>
             {REGIONS.map((r) => (
@@ -507,6 +574,9 @@ const FileUpload = ({
               </option>
             ))}
           </select>
+          {fieldErrors.region && submitAttempted && (
+            <div className="file-upload-field-error">{fieldErrors.region}</div>
+          )}
         </div>
       )}
 
@@ -514,9 +584,17 @@ const FileUpload = ({
       <div className="file-upload-field">
         <label className="file-upload-label">Data Source *</label>
         <select
-          className="file-upload-select"
+          className={`file-upload-select${fieldErrors.source && submitAttempted ? ' file-upload-select-error' : ''}`}
           value={selectedSource}
-          onChange={(e) => setSelectedSource(e.target.value)}
+          onChange={(e) => {
+            const next = e.target.value;
+            setSelectedSource(next);
+            setFieldErrors((prev) => {
+              const copy = { ...prev };
+              if (next) delete copy.source;
+              return copy;
+            });
+          }}
         >
           <option value="">Select Data Source</option>
           {DATA_SOURCES.map((s) => (
@@ -525,6 +603,9 @@ const FileUpload = ({
             </option>
           ))}
         </select>
+        {fieldErrors.source && submitAttempted && (
+          <div className="file-upload-field-error">{fieldErrors.source}</div>
+        )}
       </div>
 
       {/* Source Entity ID removed */}
@@ -571,6 +652,9 @@ const FileUpload = ({
           </div>
         )}
       </div>
+      {fieldErrors.file && submitAttempted && (
+        <div className="file-upload-field-error">{fieldErrors.file}</div>
+      )}
 
       {/* Upload Button */}
       <button

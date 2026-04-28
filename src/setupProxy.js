@@ -1,7 +1,8 @@
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
-// Keep in sync with src/apiBaseUrl.js (same hostnames = loopback, same default).
-const DEFAULT_API = 'https://northen-volunteer-25070e7d956a.herokuapp.com';
+// The dev app uses absolute API URLs to `REACT_APP_API_URL` (see apiBaseUrl.js), so the browser
+// no longer needs /api on port 3000. Kept in case a tool requests same-origin /api in dev.
+const DEFAULT_LOCAL_API = 'http://127.0.0.1:8001';
 
 function isLoopbackUrl(u) {
   if (!u || typeof u !== 'string') return false;
@@ -33,7 +34,7 @@ function proxyTarget() {
   if (e && e.trim() && (allowLocal || !isLoopbackUrl(e))) {
     return e.trim().replace(/\/$/, '');
   }
-  return DEFAULT_API;
+  return DEFAULT_LOCAL_API;
 }
 
 function makeProxy() {

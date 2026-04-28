@@ -21,7 +21,6 @@ import { useVolunteer } from '../../context/VolunteerContext';
 import { useAuth } from '../../context/AuthContext';
 import volunteerApiService from '../../services/volunteerApi';
 import { tokenService } from '../../services/tokenService';
-import { VolunteerStatus } from '../../types/volunteer';
 import { getRegionLabel } from '../../constants/volunteerConstants';
 import './MakerHomePage.css';
 
@@ -109,6 +108,26 @@ const MakerHomePage = () => {
     recs.every((r) => (r.recordStatus || r.record_status || '').toLowerCase() !== 'maker')
   ).length;
 
+  const firstPendingImportId = (() => {
+    for (const [importId, recs] of Object.entries(importGroups)) {
+      if (
+        Array.isArray(recs) &&
+        recs.some((r) => (r.recordStatus || r.record_status || '').toLowerCase() === 'maker')
+      ) {
+        return String(importId);
+      }
+    }
+    return null;
+  })();
+
+  const openMakerReview = () => {
+    if (firstPendingImportId) {
+      navigate(`/maker/review?batchId=${encodeURIComponent(firstPendingImportId)}`);
+      return;
+    }
+    navigate('/maker/review');
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -132,7 +151,7 @@ const MakerHomePage = () => {
           <div className="summary-row">
             <div
               className="summary-card-wrapper"
-              onClick={() => navigate('/maker/review', { state: { status: VolunteerStatus.PENDING } })}
+              onClick={openMakerReview}
             >
               <SummaryCard
                 title="Pending"
@@ -143,7 +162,7 @@ const MakerHomePage = () => {
             </div>
             <div
               className="summary-card-wrapper"
-              onClick={() => navigate('/maker/review', { state: { status: VolunteerStatus.SUBMITTED } })}
+              onClick={openMakerReview}
             >
               <SummaryCard
                 title="Submitted"
@@ -171,7 +190,7 @@ const MakerHomePage = () => {
 
             <div
               className="action-card review-card"
-              onClick={() => navigate('/maker/review')}
+              onClick={openMakerReview}
             >
               <FileCheck size={32} color={colors.white} />
               <h3 className="action-title">Review Records</h3>

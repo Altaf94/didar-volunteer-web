@@ -8,6 +8,8 @@ import React, {
   useState,
   useContext,
   useCallback,
+  useRef,
+  useEffect,
 } from 'react';
 import volunteerApiService from '../services/volunteerApi';
 import {
@@ -118,12 +120,19 @@ export const VolunteerProvider = ({ children }) => {
 
   const [selectedVolunteers, setSelectedVolunteers] = useState([]);
   const [currentFilters, setCurrentFilters] = useState(defaultFilters);
+  // Keeps latest filters for loadVolunteers without putting currentFilters in useCallback
+  // dependencies (which would change callback identity every load and retrigger effects).
+  const currentFiltersRef = useRef(defaultFilters);
+  useEffect(() => {
+    currentFiltersRef.current = currentFilters;
+  }, [currentFilters]);
 
   const loadVolunteers = useCallback(async (filters = {}) => {
     setVolunteersLoading(true);
     setVolunteersError(null);
     try {
-      const merged = { ...currentFilters, ...filters };
+      const merged = { ...currentFiltersRef.current, ...filters };
+      currentFiltersRef.current = merged;
       setCurrentFilters(merged);
       const response = await volunteerApiService.getVolunteers(merged);
       setVolunteers(response.data || []);
@@ -135,7 +144,7 @@ export const VolunteerProvider = ({ children }) => {
     } finally {
       setVolunteersLoading(false);
     }
-  }, [currentFilters]);
+  }, []);
 
   const loadMoreVolunteers = useCallback(async () => {
     const nextPage = volunteersPage + 1;

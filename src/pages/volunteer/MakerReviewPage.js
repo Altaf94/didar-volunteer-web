@@ -8,6 +8,33 @@ import { tokenService } from '../../services/tokenService';
 import { getAccessLevelLabel, getDutyById, getDutyByCode } from '../../constants/volunteerConstants';
 import './MakerReviewPage.css';
 
+const getRecordImportId = (record) => {
+  if (!record || typeof record !== 'object') return '';
+  const keys = [
+    'importId',
+    'import_id',
+    'importFileId',
+    'import_file_id',
+    'batchId',
+    'batch_id',
+  ];
+  for (const key of keys) {
+    const val = record[key];
+    if (val !== undefined && val !== null && String(val).trim() !== '') {
+      return String(val).trim();
+    }
+  }
+  if (record.importBatch && typeof record.importBatch === 'object') {
+    for (const key of ['id', 'importId', 'import_id', 'importFileId']) {
+      const val = record.importBatch[key];
+      if (val !== undefined && val !== null && String(val).trim() !== '') {
+        return String(val).trim();
+      }
+    }
+  }
+  return '';
+};
+
 const MakerReviewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -51,9 +78,18 @@ const MakerReviewPage = () => {
           body.import_id = batchId;
         }
         const resp = await volunteerApiService.getVolunteersByImportOrUser(body);
-        const data = resp || [];
+        const data = Array.isArray(resp) ? resp : [];
+        const targetImportId = batchId != null ? String(batchId).trim() : '';
+        const scopedData =
+          targetImportId.length > 0
+            ? (() => {
+                const hasAnyImportId = data.some((row) => getRecordImportId(row) !== '');
+                if (!hasAnyImportId) return data;
+                return data.filter((row) => getRecordImportId(row) === targetImportId);
+              })()
+            : data;
         // only show records still pending maker approval
-        const pending = data.filter(
+        const pending = scopedData.filter(
           (r) => (r.recordStatus || r.record_status || '').toLowerCase() === 'maker'
         );
         setRecords(pending);

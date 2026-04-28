@@ -36,6 +36,16 @@
   border-color: #306F45;
 }
 
+.file-upload-select-error {
+  border-color: #DC2626;
+}
+
+.file-upload-field-error {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #B91C1C;
+}
+
 .file-upload-dropzone {
   border: 2px dashed #D1D5DB;
   border-radius: 12px;
