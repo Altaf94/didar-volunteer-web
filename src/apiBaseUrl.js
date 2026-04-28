@@ -58,8 +58,11 @@ function isLoopbackUrl(url) {
 
 function canUseDirectUrl(t) {
   if (!t) return false;
+  // Never allow loopback URLs in production for any API call.
   if (isProd && isLoopbackUrl(t)) return false;
-  if (allowLocal || !isLoopbackUrl(t)) return true;
+  // `REACT_APP_ALLOW_LOCAL_API` is only for non-production-like builds.
+  if (allowLocal && !isProd) return true;
+  if (!isLoopbackUrl(t)) return true;
   return false;
 }
 
