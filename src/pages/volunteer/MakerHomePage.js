@@ -9,7 +9,6 @@ import {
   Upload,
   FileCheck,
   Send,
-  ChevronRight,
   FileSpreadsheet,
   Clock,
 } from 'lucide-react';
@@ -31,15 +30,11 @@ const MakerHomePage = () => {
 
   const {
     volunteersLoading,
-    uploadBatches,
-    uploadBatchesLoading,
     userRegion,
     loadVolunteers,
-    loadUploadBatches,
   } = useVolunteer();
 
   const [importGroups, setImportGroups] = useState({});
-  const importIdsSet = new Set(Object.keys(importGroups).map(id => String(id)));
 
   const { logout } = useAuth();
 
@@ -77,10 +72,9 @@ const MakerHomePage = () => {
   const loadData = useCallback(async () => {
     await Promise.all([
       loadVolunteers(),
-      loadUploadBatches(),
       loadByImportOrUser(),
     ]);
-  }, [loadVolunteers, loadUploadBatches, loadByImportOrUser]);
+  }, [loadVolunteers, loadByImportOrUser]);
 
   useEffect(() => {
     // Guard against React.StrictMode double-invocation in development
@@ -96,22 +90,35 @@ const MakerHomePage = () => {
   }, [loadData]);
 
   // Calculate statistics based on recordStatus from API
+  // Also factor in locally-persisted approved batch IDs (set by MakerReviewPage after submission)
+  const approvedBatchIds = (() => {
+    try {
+      return new Set(JSON.parse(localStorage.getItem('makerApproved_batches') || '[]').map(String));
+    } catch {
+      return new Set();
+    }
+  })();
 
-  // Pending = import batches where at least one record still has recordStatus "maker"
-  const pendingCount = Object.values(importGroups).filter((recs) =>
+  // Pending = batch has at least one record with recordStatus "maker" AND was NOT locally approved
+  const pendingCount = Object.entries(importGroups).filter(([importId, recs]) =>
+    !approvedBatchIds.has(String(importId)) &&
     recs.some((r) => (r.recordStatus || r.record_status || '').toLowerCase() === 'maker')
   ).length;
 
-  // Submitted = import batches where all records have moved past "maker" (e.g. "checker")
-  const submittedCount = Object.values(importGroups).filter((recs) =>
+  // Submitted = batch was locally approved OR all records have moved past "maker"
+  const submittedCount = Object.entries(importGroups).filter(([importId, recs]) =>
     recs.length > 0 &&
-    recs.every((r) => (r.recordStatus || r.record_status || '').toLowerCase() !== 'maker')
+    (
+      approvedBatchIds.has(String(importId)) ||
+      recs.every((r) => (r.recordStatus || r.record_status || '').toLowerCase() !== 'maker')
+    )
   ).length;
 
   const firstPendingImportId = (() => {
     for (const [importId, recs] of Object.entries(importGroups)) {
       if (
         Array.isArray(recs) &&
+        !approvedBatchIds.has(String(importId)) &&
         recs.some((r) => (r.recordStatus || r.record_status || '').toLowerCase() === 'maker')
       ) {
         return String(importId);
@@ -133,7 +140,7 @@ const MakerHomePage = () => {
     navigate('/login');
   };
 
-  if ((volunteersLoading || uploadBatchesLoading) && !refreshing) {
+  if (volunteersLoading && !refreshing) {
     return <IsmailiLoader message="Loading Dashboard..." />;
   }
 
@@ -207,7 +214,7 @@ const MakerHomePage = () => {
           </div>
 
           <div className="uploads-container">
-            {uploadBatches.length === 0 && Object.keys(importGroups).length === 0 ? (
+            {Object.keys(importGroups).length === 0 ? (
               <div className="empty-state">
                 <FileSpreadsheet size={40} color={colors.textMuted} />
                 <p className="empty-text">No uploads yet</p>
@@ -217,52 +224,23 @@ const MakerHomePage = () => {
               </div>
             ) : (
               <>
-                {uploadBatches.length > 0 && (
-                  <div className="batches-list">
-                    {uploadBatches
-                      .filter(b => !importIdsSet.has(String(b.id)))
-                      .slice(0, 5)
-                      .map((batch) => (
-                      <div
-                        key={batch.id}
-                        className="batch-card"
-                        onClick={() => navigate('/maker/review', { state: { batchId: batch.id } })}
-                      >
-                        <div className="batch-icon">
-                          <FileSpreadsheet size={24} color={colors.primary} />
-                        </div>
-                        <div className="batch-content">
-                          <h4 className="batch-filename">{batch.fileName}</h4>
-                          <p className="batch-meta">
-                            {batch.totalRecords} records • {getRegionLabel(batch.region)}
-                          </p>
-                        </div>
-                        <div className="batch-stats">
-                          <span className="batch-stat valid">{batch.validRecords} valid</span>
-                          {batch.discrepantRecords > 0 && (
-                            <span className="batch-stat discrepant">{batch.discrepantRecords} issues</span>
-                          )}
-                        </div>
-                        <ChevronRight size={20} color={colors.textMuted} />
-                      </div>
-                    ))}
-                  </div>
-                )}
-
                 {Object.keys(importGroups).length > 0 && (
                   <div className="import-groups-grid">
-                    {Object.entries(importGroups).filter(([, recs]) =>
-                      recs.some((r) => (r.recordStatus || r.record_status || '').toLowerCase() === 'maker')
-                    ).map(([importId, records]) => {
-                      const batchMeta = uploadBatches.find(b => String(b.id) === String(importId));
-                      const total = batchMeta?.totalRecords ?? records.length;
-                      const fileName = batchMeta?.fileName ?? batchMeta?.file_name ?? '';
+                    {Object.entries(importGroups).map(([importId, records]) => {
+                      const total = records.length;
+                      const fileName = '';
+                      const isSubmitted =
+                        approvedBatchIds.has(String(importId)) ||
+                        records.every((r) => (r.recordStatus || r.record_status || '').toLowerCase() !== 'maker');
 
                       return (
                         <div key={importId} className="import-summary-card">
                           <div className="import-summary-top">
                             <div className="import-id">Import ID: <strong>{importId}</strong></div>
                             {fileName && <div className="import-filename">{fileName}</div>}
+                            <span className={`batch-status-badge ${isSubmitted ? 'submitted' : 'pending'}`}>
+                              {isSubmitted ? 'Submitted' : 'Pending'}
+                            </span>
                           </div>
                           <div className="import-summary-body">
                             <div className="import-count">{total}</div>

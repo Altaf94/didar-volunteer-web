@@ -22,8 +22,8 @@ import { getRegionLabel } from '../../constants/volunteerConstants';
 import volunteerApiService from '../../services/volunteerApi';
 import './CheckerHomePage.css';
 
-/** Auth token role for checker users who may load maker decision queue (per API). */
-const CHECKER_MAKER_DECISIONS_ROLE = 3;
+/** Numeric roles that have checker access (2 = checker, 3 = checker+maker). */
+const CHECKER_ROLES = [2, 3];
 
 const CheckerHomePage = () => {
   const navigate = useNavigate();
@@ -48,7 +48,6 @@ const CheckerHomePage = () => {
   const { logout, userRole } = useAuth();
 
   const loadMakerDecisions = useCallback(async () => {
-    if (userRole !== CHECKER_MAKER_DECISIONS_ROLE) return;
     setMakerDecisionsLoading(true);
     setMakerDecisionsError(null);
     try {
@@ -61,19 +60,16 @@ const CheckerHomePage = () => {
     } finally {
       setMakerDecisionsLoading(false);
     }
-  }, [userRole]);
+  }, []);
 
   const loadData = useCallback(async () => {
-    const tasks = [
+    await Promise.all([
       loadVolunteers({ status: VolunteerStatus.SUBMITTED }),
       loadDashboardStats(),
       loadDispatchPackages(),
-    ];
-    if (userRole === CHECKER_MAKER_DECISIONS_ROLE) {
-      tasks.push(loadMakerDecisions());
-    }
-    await Promise.all(tasks);
-  }, [loadVolunteers, loadDashboardStats, loadDispatchPackages, loadMakerDecisions, userRole]);
+      loadMakerDecisions(),
+    ]);
+  }, [loadVolunteers, loadDashboardStats, loadDispatchPackages, loadMakerDecisions]);
 
   useEffect(() => {
     loadData();
@@ -86,15 +82,17 @@ const CheckerHomePage = () => {
   }, [loadData]);
 
   // Calculate statistics
-  const submittedCount = volunteers.filter(v => v.status === VolunteerStatus.SUBMITTED).length;
   const approvedCount = volunteers.filter(v => v.status === VolunteerStatus.APPROVED).length;
-
-  const isNationalLevel = userLevel === UserLevel.NATIONAL;
 
   const byImportEntries =
     makerDecisions?.byImportId && typeof makerDecisions.byImportId === 'object'
       ? Object.entries(makerDecisions.byImportId)
       : [];
+
+  // Pending Review = number of import batches waiting for checker action
+  const pendingReviewCount = byImportEntries.length || volunteers.filter(v => v.status === VolunteerStatus.SUBMITTED).length;
+
+  const isNationalLevel = userLevel === UserLevel.NATIONAL;
 
   const handleLogout = () => {
     logout();
@@ -123,7 +121,7 @@ const CheckerHomePage = () => {
             >
               <SummaryCard
                 title="Pending Review"
-                value={submittedCount}
+                value={pendingReviewCount}
                 icon={<Clock size={24} color={colors.info} />}
                 color={colors.info}
               />
@@ -152,7 +150,7 @@ const CheckerHomePage = () => {
             >
               <FileCheck size={32} color={colors.white} />
               <h3 className="action-title">Review Submissions</h3>
-              <p className="action-subtitle">{submittedCount} pending</p>
+              <p className="action-subtitle">{pendingReviewCount} pending</p>
             </div>
 
             <div
@@ -167,7 +165,7 @@ const CheckerHomePage = () => {
         </section>
 
         {/* GET /api/volunteers/maker-decisions (byImportId) — role 3, Recent Uploads layout */}
-        {userRole === CHECKER_MAKER_DECISIONS_ROLE && (
+        {CHECKER_ROLES.includes(userRole) && (
           <section className="section recent-uploads-section">
             <div className="section-header">
               <h2 className="section-title">Recent Uploads</h2>

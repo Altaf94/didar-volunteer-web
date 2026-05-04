@@ -13,39 +13,26 @@ import { parseExcelFile, validateExcelFormat, convertExcelToVolunteerData } from
 import './FileUpload.css';
 
 /**
- * From POST /api/cnic-usage/batch: builds the set of CNICs (digits only) that are *not* registered
- * (should get register: "No" on /api/volunteers/records).
- * New API: { success, results: [ { cnic, familyLevelDetails: { present }, form: { present } } ] } —
- * "registered" if either present is true. Legacy: notFound / not_found arrays of CNICs.
+ * From POST /api/checkcnic: builds the set of CNICs (digits only) that are *not* registered.
+ * Response: { results: [ { cnic, found } ], requestId } —
+ * found: true => Registered: "Yes", found: false => Registered: "No".
  */
 function buildNotFoundCnicsSet(cnicResult, cnicsToCheck) {
   if (Array.isArray(cnicResult?.results)) {
     if (cnicResult.results.length === 0) {
       return new Set(cnicsToCheck);
     }
-    const regByCnic = new Map();
+    const notFound = new Set();
     cnicResult.results.forEach((row) => {
       const key = String(row.cnic || '').replace(/-/g, '');
       if (!key) return;
-      const isRegistered =
-        row.familyLevelDetails?.present === true || row.form?.present === true;
-      regByCnic.set(key, isRegistered);
-    });
-    const notFound = new Set();
-    cnicsToCheck.forEach((c) => {
-      if (regByCnic.get(c) !== true) {
-        notFound.add(c);
+      if (row.found !== true) {
+        notFound.add(key);
       }
     });
     return notFound;
   }
-  const notFoundList = Array.isArray(cnicResult?.notFound)
-    ? cnicResult.notFound
-    : cnicResult?.not_found;
-  if (!Array.isArray(notFoundList) || notFoundList.length === 0) {
-    return new Set();
-  }
-  return new Set(notFoundList.map((c) => String(c).replace(/-/g, '')));
+  return new Set(cnicsToCheck);
 }
 
 const FileUpload = ({
@@ -410,7 +397,7 @@ const FileUpload = ({
       const cnicsToCheck = [...new Set(volunteers.map(v => v.cnic.replace(/-/g, '')).filter(Boolean))];
       let notFoundCnics = new Set();
       if (cnicsToCheck.length > 0) {
-        const cnicResp = await fetch(`${cnicApiBase}/api/cnic-usage/batch`, {
+        const cnicResp = await fetch(`${cnicApiBase}/api/checkcnic`, {
           method: 'POST',
           headers: cnicCheckHeaders,
           body: JSON.stringify({ cnics: cnicsToCheck }),

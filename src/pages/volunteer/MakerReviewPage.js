@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import Header from '../../components/Header/Header';
-import IsmailiLoader from '../../components/shared/IsmailiLoader';
 import volunteerApiService from '../../services/volunteerApi';
 import { tokenService } from '../../services/tokenService';
 import { getAccessLevelLabel, getDutyById, getDutyByCode } from '../../constants/volunteerConstants';
@@ -39,7 +38,6 @@ const MakerReviewPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [records, setRecords] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [batchId, setBatchId] = useState(location?.state?.batchId ?? null);
   const [viewMode] = useState('compact'); // 'compact' or 'detailed'
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,7 +56,6 @@ const MakerReviewPage = () => {
 
   useEffect(() => {
     const load = async () => {
-      setLoading(true);
       try {
         let userId = null;
         const token = tokenService.getAccessToken();
@@ -96,8 +93,6 @@ const MakerReviewPage = () => {
       } catch (err) {
         console.error('Failed to load review records', err);
         setRecords([]);
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -173,7 +168,6 @@ const MakerReviewPage = () => {
   };
 
   const fields = [
-    { label: 'Sno', keys: ['Sno', 'sno', 'record_number', 'recordNumber'] },
     { label: 'CNIC', keys: ['cnic', 'CNIC'] },
     { label: 'Name', keys: ['name'] },
     { label: 'Event', keys: ['event', 'eventName', 'event_id', 'eventId'] },
@@ -181,7 +175,6 @@ const MakerReviewPage = () => {
     { label: 'Duty Type', keys: ['dutyType', 'duty_type', 'duty'] },
     { label: 'Register', keys: ['register', 'Register'] },
     { label: 'Decision Status', keys: ['decision_status', 'decisionStatus', 'decision'] },
-    { label: 'Created At', keys: ['created_at', 'createdAt'] },
   ];
 
   const getRecordId = (record) => {
@@ -270,8 +263,6 @@ const MakerReviewPage = () => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
     if (currentPage < 1) setCurrentPage(1);
   }, [filteredRecords, currentPage, pageSize]);
-
-  if (loading) return <IsmailiLoader message="Loading records..." />;
 
   return (
     <div className="maker-review-page">

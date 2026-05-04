@@ -3,6 +3,11 @@
   background-color: #F8FAFD;
 }
 
+.checker-import-review-page .review-content {
+  max-width: 100%;
+  padding: 20px 16px;
+}
+
 .checker-import-top {
   max-width: 1400px;
   margin: 0 auto;
@@ -47,13 +52,18 @@
   word-break: break-word;
 }
 
+.checker-table-cell-wrap .table-head,
+.checker-table-cell-wrap .table-row {
+  grid-auto-columns: minmax(80px, 1fr);
+}
+
 .checker-table-cell-wrap .cell-action {
   min-width: 140px;
 }
 
 .checker-row-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   gap: 6px;
   align-items: center;
 }
@@ -62,6 +72,7 @@
   font-size: 12px;
   font-weight: 600;
   padding: 6px 10px;
+  white-space: nowrap;
   border-radius: 6px;
   cursor: pointer;
   line-height: 1.2;
@@ -101,6 +112,7 @@
 
 .checker-submit-btn {
   min-width: 150px;
+  text-align: center;
 }
 
 .checker-btn.selected {

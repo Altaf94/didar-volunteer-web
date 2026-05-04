@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header/Header';
 import IsmailiLoader from '../../components/shared/IsmailiLoader';
 import volunteerApiService from '../../services/volunteerApi';
+import { tokenService } from '../../services/tokenService';
 import { getAccessLevelLabel, getDutyById, getDutyByCode } from '../../constants/volunteerConstants';
 import './MakerReviewPage.css';
 import './CheckerImportReviewPage.css';
@@ -27,6 +28,7 @@ const CheckerImportReviewPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pendingActions, setPendingActions] = useState({});
   const [submittingActions, setSubmittingActions] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
   const importId = importIdParam != null ? String(importIdParam) : '';
   const makerRecordsFromState = location.state?.makerRecords;
@@ -165,9 +167,9 @@ const CheckerImportReviewPage = () => {
     { label: 'Register', keys: ['register', 'Register'] },
     { label: 'Decision', keys: ['decisionStatus', 'decision_status', 'decision'] },
     { label: 'Maker', keys: ['makerId', 'maker_id'] },
+    { label: 'Action', isAction: true },
   ];
-  const actionColumn = { label: 'Action', isAction: true };
-  const tableColumns = [...fields, actionColumn];
+  const tableColumns = fields;
 
   useEffect(() => {
     if (!importId) {
@@ -260,7 +262,10 @@ const CheckerImportReviewPage = () => {
   const selectedActionCount = Object.keys(pendingActions).length;
 
   const buildSubmitDecision = (record, action) => {
-    const decisionStatus = action === 'approve' ? 'Ok' : 'Reject';
+    // If Register is explicitly "No" / "no" / "false" / 0, always Reject; otherwise Ok
+    const registerVal = String(record?.register ?? record?.Register ?? '').trim().toLowerCase();
+    const isNotRegistered = registerVal === 'no' || registerVal === 'false' || registerVal === '0';
+    const decisionStatus = isNotRegistered ? 'Reject' : (action === 'approve' ? 'Ok' : 'Reject');
     const item = { decisionStatus, reason: DEFAULT_SUBMIT_REASON };
     const rawVolunteerId = record.id ?? record.Id;
     const dcid = record.decisionId ?? record.decision_id;
@@ -298,10 +303,16 @@ const CheckerImportReviewPage = () => {
   };
 
   const onSubmitActions = async () => {
-    if (selectedActionCount === 0 || submittingActions) return;
+    if (records.length === 0 || submittingActions) return;
     setSubmittingActions(true);
     try {
-      const decisions = Object.entries(pendingActions)
+      // Use per-row actions if set; otherwise approve all records
+      const actionsToSubmit =
+        selectedActionCount > 0
+          ? pendingActions
+          : Object.fromEntries(records.map((r) => [String(getRecordId(r)), 'approve']));
+
+      const decisions = Object.entries(actionsToSubmit)
         .map(([rowKey, action]) => {
           const record = records.find(
             (r) => getRecordId(r) != null && String(getRecordId(r)) === String(rowKey),
@@ -316,9 +327,17 @@ const CheckerImportReviewPage = () => {
 
       await volunteerApiService.submitMakerDecisionsByImport({
         importId: importIdVal,
+        checkerId: (() => {
+          try {
+            const token = tokenService.getAccessToken();
+            const payload = JSON.parse(tokenService.safeBase64Decode(token.split('.')[1]));
+            return payload.user_id || payload.id || payload.sub || null;
+          } catch { return null; }
+        })(),
         decisions,
       });
       setPendingActions({});
+      setSubmitted(true);
     } catch (e) {
       console.error('Submit maker decisions failed', e);
     } finally {
@@ -479,7 +498,7 @@ const CheckerImportReviewPage = () => {
               type="button"
               className="approve-btn checker-submit-btn"
               onClick={onSubmitActions}
-              disabled={selectedActionCount === 0 || submittingActions}
+              disabled={records.length === 0 || submittingActions || submitted}
             >
               {submittingActions
                 ? 'Submitting...'
