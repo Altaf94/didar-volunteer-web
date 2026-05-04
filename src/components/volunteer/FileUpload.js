@@ -463,7 +463,7 @@ const FileUpload = ({
           dutyType: v.dutyType != null ? String(v.dutyType) : '',
           importId: importId,
           decisionStatus: 'pending',
-          register: isRegistered ? 'No' : 'Yes',
+          register: isRegistered ? 'Yes' : 'No',
         };
       });
 
