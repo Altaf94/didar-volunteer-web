@@ -14,13 +14,23 @@ const API_TARGET =
   process.env.API_TARGET_URL ||
   'https://northen-volunteer-25070e7d956a.herokuapp.com';
 
-// Proxy /api/* and /health → backend.
-// Mount at root so the full path (including /api prefix) is forwarded unchanged.
+// Proxy /api/* and /health → backend, preserving the full path.
+// Mount at '/api' (Express strips the prefix), then pathRewrite adds it back.
 app.use(
+  '/api',
   createProxyMiddleware({
     target: API_TARGET,
     changeOrigin: true,
-    pathFilter: ['/api/**', '/health'],
+    pathRewrite: { '^/': '/api/' },
+  })
+);
+
+app.use(
+  '/health',
+  createProxyMiddleware({
+    target: API_TARGET,
+    changeOrigin: true,
+    pathRewrite: { '^/': '/health' },
   })
 );
 
