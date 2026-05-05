@@ -33,7 +33,6 @@ const CheckerHomePage = () => {
   const [makerDecisionsError, setMakerDecisionsError] = useState(null);
 
   const {
-    volunteers,
     volunteersLoading,
     dashboardStats,
     dashboardLoading,
@@ -82,15 +81,31 @@ const CheckerHomePage = () => {
   }, [loadData]);
 
   // Calculate statistics
-  const approvedCount = volunteers.filter(v => v.status === VolunteerStatus.APPROVED).length;
-
   const byImportEntries =
     makerDecisions?.byImportId && typeof makerDecisions.byImportId === 'object'
       ? Object.entries(makerDecisions.byImportId)
       : [];
 
-  // Pending Review = number of import batches waiting for checker action
-  const pendingReviewCount = byImportEntries.length || volunteers.filter(v => v.status === VolunteerStatus.SUBMITTED).length;
+  const PENDING_STATUSES = ['pending', 'discrepant', 'discrepant-1', 'discrepant-2', 'discrepant(1)', 'discrepant(2)'];
+
+  // Pending Review = imports that still have at least one pending/discrepant record
+  const pendingReviewCount = byImportEntries.filter(([, recs]) =>
+    Array.isArray(recs) && recs.some((r) => {
+      const s = String(r?.decisionStatus ?? r?.decision_status ?? r?.decision ?? '').trim().toLowerCase();
+      return PENDING_STATUSES.includes(s);
+    })
+  ).length;
+
+  // Ready to Print = imports where checker has decided (no pending/discrepant, checkerId set on at least one record)
+  const readyToPrintCount = byImportEntries.filter(([, recs]) => {
+    if (!Array.isArray(recs) || recs.length === 0) return false;
+    const noPending = recs.every((r) => {
+      const s = String(r?.decisionStatus ?? r?.decision_status ?? r?.decision ?? '').trim().toLowerCase();
+      return !PENDING_STATUSES.includes(s);
+    });
+    const checkerActed = recs.some((r) => r?.checkerId != null && r?.checkerId !== '');
+    return noPending && checkerActed;
+  }).length;
 
   const isNationalLevel = userLevel === UserLevel.NATIONAL;
 
@@ -132,7 +147,7 @@ const CheckerHomePage = () => {
             >
               <SummaryCard
                 title="Ready to Print"
-                value={approvedCount}
+                value={readyToPrintCount}
                 icon={<Printer size={24} color={colors.primary} />}
                 color={colors.primary}
               />
@@ -159,7 +174,7 @@ const CheckerHomePage = () => {
             >
               <Printer size={32} color={colors.white} />
               <h3 className="action-title">Print Badges</h3>
-              <p className="action-subtitle">{approvedCount} ready</p>
+              <p className="action-subtitle">{readyToPrintCount} ready</p>
             </div>
           </div>
         </section>

@@ -158,7 +158,6 @@ const CheckerImportReviewPage = () => {
   }, []);
 
   const fields = [
-    { label: 'Sno', keys: ['recordNumber', 'record_number', 'Sno', 'sno'] },
     { label: 'CNIC', keys: ['cnic', 'CNIC'] },
     { label: 'Name', keys: ['name'] },
     { label: 'Event', keys: ['eventName', 'event', 'eventId', 'event_id'] },
@@ -222,6 +221,13 @@ const CheckerImportReviewPage = () => {
     return cnic.toLowerCase().includes(q) || name.toLowerCase().includes(q);
   });
 
+  // If all records are already decided (no pending/discrepant), treat as already submitted
+  const alreadySubmitted = records.length > 0 && records.every((r) => {
+    const raw = getVal(r, ['decisionStatus', 'decision_status', 'decision']);
+    const s = String(raw ?? '').trim().toLowerCase();
+    return s !== 'pending' && s !== 'discrepant(1)' && s !== 'discrepant(2)' && s !== 'discrepant-1' && s !== 'discrepant-2';
+  });
+
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
     setCurrentPage((p) => Math.min(Math.max(1, p), totalPages));
@@ -243,23 +249,43 @@ const CheckerImportReviewPage = () => {
     return null;
   };
 
-  const showCheckerActions = (record) => {
+  const isDiscrepant = (record) => {
     const raw = getVal(record, [
       'decisionStatus',
       'decision_status',
       'decision',
     ]);
     const s = String(raw ?? '').trim().toLowerCase();
-    return s === 'discrepant(1)' || s === 'discrepant(2)';
+    return s === 'discrepant(1)' || s === 'discrepant(2)' || s === 'discrepant-1' || s === 'discrepant-2';
+  };
+
+  const showCheckerActions = (record) => {
+    if (!isDiscrepant(record)) return false;
+    const rid = getRecordId(record);
+    // Hide buttons once an action has been taken
+    return rid == null || pendingActions[String(rid)] == null;
   };
 
   const onCheckerAction = (action, record) => {
     const recordId = getRecordId(record);
     if (recordId == null) return;
-    setPendingActions(prev => ({ ...prev, [String(recordId)]: action }));
+    const oppositeAction = action === 'approve' ? 'reject' : 'approve';
+    const thisCnic = String(record?.cnic ?? record?.CNIC ?? '').replace(/-/g, '');
+    const updates = { [String(recordId)]: action };
+    // Auto-set opposite action for the other Discrepant row of the same CNIC
+    if (thisCnic) {
+      records.forEach((r) => {
+        const otherId = getRecordId(r);
+        if (otherId == null || String(otherId) === String(recordId)) return;
+        const otherCnic = String(r?.cnic ?? r?.CNIC ?? '').replace(/-/g, '');
+        if (otherCnic !== thisCnic) return;
+        if (showCheckerActions(r)) {
+          updates[String(otherId)] = oppositeAction;
+        }
+      });
+    }
+    setPendingActions(prev => ({ ...prev, ...updates }));
   };
-
-  const selectedActionCount = Object.keys(pendingActions).length;
 
   const buildSubmitDecision = (record, action) => {
     // If Register is explicitly "No" / "no" / "false" / 0, always Reject; otherwise Ok
@@ -307,18 +333,12 @@ const CheckerImportReviewPage = () => {
     setSubmittingActions(true);
     try {
       // Use per-row actions if set; otherwise approve all records
-      const actionsToSubmit =
-        selectedActionCount > 0
-          ? pendingActions
-          : Object.fromEntries(records.map((r) => [String(getRecordId(r)), 'approve']));
-
-      const decisions = Object.entries(actionsToSubmit)
-        .map(([rowKey, action]) => {
-          const record = records.find(
-            (r) => getRecordId(r) != null && String(getRecordId(r)) === String(rowKey),
-          );
-          if (!record) return null;
-          return buildSubmitDecision(record, action);
+      // Always send all records; use pending action if set, otherwise default to 'approve'
+      const decisions = records
+        .map((r) => {
+          const rid = getRecordId(r);
+          const action = (rid != null && pendingActions[String(rid)]) || 'approve';
+          return buildSubmitDecision(r, action);
         })
         .filter(Boolean);
 
@@ -338,6 +358,7 @@ const CheckerImportReviewPage = () => {
       });
       setPendingActions({});
       setSubmitted(true);
+      navigate('/checker');
     } catch (e) {
       console.error('Submit maker decisions failed', e);
     } finally {
@@ -369,22 +390,12 @@ const CheckerImportReviewPage = () => {
         subtitle={`Import ID: ${importId}`}
         onLogout={() => navigate('/login')}
       />
-      <div className="checker-import-top">
-        <button type="button" className="checker-back-link" onClick={() => navigate('/checker')}>
-          ← Back to dashboard
-        </button>
-      </div>
-
       <div className="review-content">
         {loadError && (
           <p className="checker-import-error" role="alert">
             {loadError}
           </p>
         )}
-
-        <div className="review-header">
-          <h2>Imported records</h2>
-        </div>
 
         <div className="search-bar">
           <input
@@ -448,6 +459,13 @@ const CheckerImportReviewPage = () => {
                           ) : (
                             <span className="checker-action-empty">—</span>
                           )
+                        ) : f.label === 'Decision' ? (
+                          (() => {
+                            const pending = pendingActions[String(getRecordId(r))];
+                            if (pending === 'approve') return 'Ok';
+                            if (pending === 'reject') return 'Reject';
+                            return formatFieldValue(f, r);
+                          })()
                         ) : (
                           formatFieldValue(f, r)
                         )}
@@ -498,11 +516,9 @@ const CheckerImportReviewPage = () => {
               type="button"
               className="approve-btn checker-submit-btn"
               onClick={onSubmitActions}
-              disabled={records.length === 0 || submittingActions || submitted}
+              disabled={records.length === 0 || submittingActions || submitted || alreadySubmitted}
             >
-              {submittingActions
-                ? 'Submitting...'
-                : `Submit${selectedActionCount > 0 ? ` (${selectedActionCount})` : ''}`}
+              {submittingActions ? 'Submitting...' : submitted || alreadySubmitted ? 'Submitted' : 'Submit'}
             </button>
           </div>
         )}
