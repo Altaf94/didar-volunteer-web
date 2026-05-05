@@ -14,13 +14,14 @@
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.1",
     "react-scripts": "5.0.1",
+    "serve": "^14.2.6",
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
   "engines": {
-  "node": "20.x",
-  "npm": "11.x"
-},
+    "node": "20.x",
+    "npm": "11.x"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
