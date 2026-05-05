@@ -14,21 +14,13 @@ const API_TARGET =
   process.env.API_TARGET_URL ||
   'https://northen-volunteer-25070e7d956a.herokuapp.com';
 
-// Proxy /api/* → backend
+// Proxy /api/* and /health → backend.
+// Mount at root so the full path (including /api prefix) is forwarded unchanged.
 app.use(
-  '/api',
   createProxyMiddleware({
     target: API_TARGET,
     changeOrigin: true,
-  })
-);
-
-// Proxy /health → backend health check
-app.use(
-  '/health',
-  createProxyMiddleware({
-    target: API_TARGET,
-    changeOrigin: true,
+    pathFilter: ['/api/**', '/health'],
   })
 );
 
