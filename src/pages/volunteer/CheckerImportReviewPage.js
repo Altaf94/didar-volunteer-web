@@ -361,7 +361,6 @@ const CheckerImportReviewPage = () => {
       });
       setPendingActions({});
       setSubmitted(true);
-      navigate('/checker');
     } catch (e) {
       console.error('Submit maker decisions failed', e);
     } finally {
