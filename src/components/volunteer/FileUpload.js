@@ -6,7 +6,7 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileSpreadsheet, X } from 'lucide-react';
 import { colors } from '../../theme';
-import { REGIONS, DATA_SOURCES } from '../../constants/volunteerConstants';
+import { REGIONS, DATA_SOURCES, getRegionLabel, getDataSourceLabel } from '../../constants/volunteerConstants';
 import { API_BASE_URL } from '../../apiBaseUrl';
 import { tokenService } from '../../services/tokenService';
 import { parseExcelFile, validateExcelFormat, convertExcelToVolunteerData } from '../../utils/excelParser';
@@ -53,7 +53,7 @@ const FileUpload = ({
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
   const [validationPassed, setValidationPassed] = useState(false);
-  const [, setValidationErrors] = useState([]);
+  const [validationErrors, setValidationErrors] = useState([]);
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitAttempted, setSubmitAttempted] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
@@ -464,6 +464,8 @@ const FileUpload = ({
           importId: importId,
           decisionStatus: 'pending',
           register: isRegistered ? 'Yes' : 'No',
+          dataSource: getDataSourceLabel(selectedSource),
+          region: getRegionLabel(effectiveRegion),
         };
       });
 
@@ -481,8 +483,9 @@ const FileUpload = ({
       });
 
       if (!batchResp.ok) {
-        const txt = await batchResp.text().catch(() => '');
-        throw new Error(`Batch upload failed: ${batchResp.status} ${txt}`);
+        const errData = await batchResp.json().catch(() => null);
+        const errMsg = errData?.message || `Batch upload failed: ${batchResp.status}`;
+        throw new Error(errMsg);
       }
 
       const batchResult = await batchResp.json().catch(() => null);
@@ -639,8 +642,17 @@ const FileUpload = ({
           </div>
         )}
       </div>
-      {fieldErrors.file && submitAttempted && (
-        <div className="file-upload-field-error">{fieldErrors.file}</div>
+
+      {/* Validation Status */}
+      {selectedFile && !isValidating && !validationPassed && validationErrors.length > 0 && (
+        <div style={{ padding: '10px', backgroundColor: '#f8d7da', border: '1px solid #dc3545', borderRadius: '4px', marginBottom: '10px' }}>
+          <p style={{ margin: '0 0 5px 0', fontWeight: 'bold', color: '#721c24' }}>❌ Validation Failed:</p>
+          <ul style={{ margin: 0, paddingLeft: '20px', color: '#721c24' }}>
+            {validationErrors.map((err, idx) => (
+              <li key={idx}>{err}</li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {/* Upload Button */}

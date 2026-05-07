@@ -43,12 +43,10 @@ const LoginPage = () => {
       const token = localStorage.getItem('token');
       if (token) {
         const decoded = decodeJWT(token);
-        if (decoded?.role === 1) {
+        if (decoded?.role === 2 || decoded?.role === 5) {
           navigate('/maker');
-        } else if (decoded?.role === 2 || decoded?.role === 3) {
+        } else if (decoded?.role === 3 || decoded?.role === 6) {
           navigate('/checker');
-        } else {
-          navigate('/admin');
         }
       }
     }
@@ -139,9 +137,9 @@ const LoginPage = () => {
         const userRole = decodedToken.role;
 
         // Accept the role ids currently issued by the backend.
-        if (userRole !== 1 && userRole !== 2 && userRole !== 3) {
+        if (userRole !== 2 && userRole !== 3 && userRole !== 5 && userRole !== 6) {
           throw new Error(
-            'Access denied. Only Makers, Checkers, and Administrators can access this system.'
+            'Access denied. Only Makers and Checkers can access this system.'
           );
         }
 
@@ -159,12 +157,10 @@ const LoginPage = () => {
         console.log('Login successful! Redirecting based on role:', userRole);
         
         // Route based on user role
-        if (userRole === 1) {
+        if (userRole === 2 || userRole === 5) {
           navigate('/maker');
-        } else if (userRole === 2 || userRole === 3) {
+        } else if (userRole === 3 || userRole === 6) {
           navigate('/checker');
-        } else {
-          navigate('/admin');
         }
       } else {
         throw new Error('Both access token and refresh token are required');
@@ -203,15 +199,11 @@ const LoginPage = () => {
       />
 
       <div className="login-card">
-        {/* Logo */}
-        <div className="login-logo">
-          <div className="logo-placeholder-large">
-            <span>MHIP</span>
-          </div>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+          <img src="/ismaililogo.png" alt="Logo" style={{ width: 80, height: 80, borderRadius: 16 }} />
         </div>
-
         {/* Title */}
-        <h1 className="login-title">Welcome to MHIP</h1>
+        <h1 className="login-title">Welcome</h1>
         <p className="login-subtitle">
           Enter the credentials shared by your respective Council
         </p>

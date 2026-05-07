@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import Header from '../../components/Header/Header';
+import { usePermissions } from '../../hooks/usePermissions';
 import volunteerApiService from '../../services/volunteerApi';
 import { tokenService } from '../../services/tokenService';
 import { getAccessLevelLabel, getDutyById, getDutyByCode } from '../../constants/volunteerConstants';
@@ -44,6 +45,7 @@ const MakerReviewPage = () => {
   const pageSize = 13; // show 13 entries per page
   const [search, setSearch] = useState('');
   const [approving, setApproving] = useState(false);
+  const { canMake } = usePermissions();
 
   useEffect(() => {
     if (!batchId) {
@@ -209,6 +211,10 @@ const MakerReviewPage = () => {
   }, [records, batchId]);
 
   const handleApprove = async () => {
+    if (!canMake) {
+      alert('You do not have permission to approve records.');
+      return;
+    }
     if (!records.length) return;
 
     setApproving(true);
@@ -314,11 +320,13 @@ const MakerReviewPage = () => {
                 ) : (
                   <button
                     className="approve-btn"
-                    onClick={handleApprove}
-                    disabled={approving || !records.length}
+                    onClick={canMake ? handleApprove : undefined}
+                    disabled={!canMake || approving || !records.length}
+                    style={{ opacity: canMake ? 1 : 0.6 }}
+                    title={!canMake ? 'You do not have permission to approve records' : ''}
                   >
                     <Check size={16} />
-                    {approving ? 'Approving...' : 'Approve'}
+                    {canMake ? (approving ? 'Approving...' : 'Approve') : 'No Permission'}
                   </button>
                 )}
               </div>
@@ -355,10 +363,12 @@ const MakerReviewPage = () => {
                   <button
                     className="approve-btn"
                     onClick={handleApprove}
-                    disabled={approving || !records.length}
+                    disabled={!canMake || approving || !records.length}
+                    style={{ opacity: canMake ? 1 : 0.6 }}
+                    title={!canMake ? 'You do not have permission to approve records' : ''}
                   >
                     <Check size={16} />
-                    {approving ? 'Approving...' : 'Approve'}
+                    {approving ? 'Approving...' : canMake ? 'Approve' : 'No Permission'}
                   </button>
                 )}
               </div>

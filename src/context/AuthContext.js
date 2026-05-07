@@ -13,6 +13,11 @@ export const AuthProvider = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
+  const [permissions, setPermissions] = useState({
+    canView: false,
+    canMake: false,
+    canCheck: false,
+  });
   const [lookupData, setLookupData] = useState(null);
 
   useEffect(() => {
@@ -41,6 +46,11 @@ export const AuthProvider = ({ children }) => {
         const role = tokenService.getUserRole();
         setUserRole(role);
 
+        const userPermissions = tokenService.getUserPermissions();
+        if (userPermissions) {
+          setPermissions(userPermissions);
+        }
+
         const userData = localStorage.getItem('user');
         if (userData) {
           setUser(JSON.parse(userData));
@@ -67,6 +77,12 @@ export const AuthProvider = ({ children }) => {
 
     const role = tokenService.getUserRole();
     setUserRole(role);
+
+    const userPermissions = tokenService.getUserPermissions();
+    if (userPermissions) {
+      setPermissions(userPermissions);
+    }
+
     setIsAuthenticated(true);
   };
 
@@ -75,6 +91,11 @@ export const AuthProvider = ({ children }) => {
     setIsAuthenticated(false);
     setUser(null);
     setUserRole(null);
+    setPermissions({
+      canView: false,
+      canMake: false,
+      canCheck: false,
+    });
   };
 
   const updateLookupData = (data) => {
@@ -94,6 +115,7 @@ export const AuthProvider = ({ children }) => {
         logout,
         checkAuth,
         setLookupData: updateLookupData,
+        permissions,
       }}>
       {children}
     </AuthContext.Provider>

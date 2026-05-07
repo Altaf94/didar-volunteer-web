@@ -87,7 +87,7 @@ export const USER_ROLES = [
 
 export const USER_LEVELS = [
   { value: UserLevel.NATIONAL, label: 'National Level', canViewAllRegions: true },
-  { value: UserLevel.REGIONAL, label: 'Regional Level', canViewAllRegions: false },
+  { value: UserLevel.REGIONAL, label: '', canViewAllRegions: false },
   { value: UserLevel.LOCAL, label: 'Local Level', canViewAllRegions: false },
 ];
 

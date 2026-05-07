@@ -11,13 +11,13 @@ import MakerReviewPage from './pages/volunteer/MakerReviewPage';
 import CheckerHomePage from './pages/volunteer/CheckerHomePage';
 import CheckerImportReviewPage from './pages/volunteer/CheckerImportReviewPage';
 import VolunteerUploadPage from './pages/volunteer/VolunteerUploadPage';
-import DashboardPage from './pages/volunteer/DashboardPage';
+
 
 import './App.css';
 
 // Protected Route Component
-const ProtectedRoute = ({ children, allowedRoles }) => {
-  const { isAuthenticated, isLoading, userRole } = useAuth();
+const ProtectedRoute = ({ children, allowedRoles, requirePermission }) => {
+  const { isAuthenticated, isLoading, userRole, permissions } = useAuth();
 
   if (isLoading) {
     return (
@@ -32,14 +32,26 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
     return <Navigate to="/login" replace />;
   }
 
+  // Check role-based access
   if (allowedRoles && !allowedRoles.includes(userRole)) {
     // Redirect based on role
-    if (userRole === 1) {
+    if (userRole === 2 || userRole === 5) {
       return <Navigate to="/maker" replace />;
-    } else if (userRole === 2 || userRole === 3) {
+    } else if (userRole === 3 || userRole === 6) {
       return <Navigate to="/checker" replace />;
-    } else if (userRole === 4) {
-      return <Navigate to="/admin" replace />;
+    }
+  }
+
+  // Check permission-based access
+  if (requirePermission) {
+    const hasPermission = 
+      (requirePermission === 'view' && permissions?.canView) ||
+      (requirePermission === 'make' && permissions?.canMake) ||
+      (requirePermission === 'check' && permissions?.canCheck);
+    
+    if (!hasPermission) {
+      // Redirect to login if insufficient permissions
+      return <Navigate to="/login" replace />;
     }
   }
 
@@ -61,14 +73,12 @@ const PublicRoute = ({ children }) => {
 
   if (isAuthenticated) {
     // Redirect based on role
-    if (userRole === 1) {
+    if (userRole === 2 || userRole === 5) {
       return <Navigate to="/maker" replace />;
-    } else if (userRole === 2 || userRole === 3) {
+    } else if (userRole === 3 || userRole === 6) {
       return <Navigate to="/checker" replace />;
-    } else if (userRole === 4) {
-      return <Navigate to="/admin" replace />;
     }
-    return <Navigate to="/maker" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return children;
@@ -91,7 +101,7 @@ function AppRoutes() {
       <Route
         path="/maker"
         element={
-          <ProtectedRoute allowedRoles={[1, 3]}>
+          <ProtectedRoute allowedRoles={[2, 5]} requirePermission="view">
             <MakerHomePage />
           </ProtectedRoute>
         }
@@ -99,7 +109,7 @@ function AppRoutes() {
       <Route
         path="/maker/upload"
         element={
-          <ProtectedRoute allowedRoles={[1, 3]}>
+          <ProtectedRoute allowedRoles={[2, 5]} requirePermission="make">
             <VolunteerUploadPage />
           </ProtectedRoute>
         }
@@ -107,7 +117,7 @@ function AppRoutes() {
       <Route
         path="/maker/review"
         element={
-          <ProtectedRoute allowedRoles={[1, 3]}>
+          <ProtectedRoute allowedRoles={[2, 5]} requirePermission="view">
             <MakerReviewPage />
           </ProtectedRoute>
         }
@@ -117,7 +127,7 @@ function AppRoutes() {
       <Route
         path="/checker"
         element={
-          <ProtectedRoute allowedRoles={[2, 3]}>
+          <ProtectedRoute allowedRoles={[3, 6]} requirePermission="view">
             <CheckerHomePage />
           </ProtectedRoute>
         }
@@ -125,7 +135,7 @@ function AppRoutes() {
       <Route
         path="/checker/review"
         element={
-          <ProtectedRoute allowedRoles={[2, 3]}>
+          <ProtectedRoute allowedRoles={[3, 6]} requirePermission="check">
             <CheckerHomePage />
           </ProtectedRoute>
         }
@@ -133,7 +143,7 @@ function AppRoutes() {
       <Route
         path="/checker/print"
         element={
-          <ProtectedRoute allowedRoles={[2, 3]}>
+          <ProtectedRoute allowedRoles={[3, 6]} requirePermission="check">
             <CheckerHomePage />
           </ProtectedRoute>
         }
@@ -141,7 +151,7 @@ function AppRoutes() {
       <Route
         path="/checker/dispatch"
         element={
-          <ProtectedRoute allowedRoles={[2, 3]}>
+          <ProtectedRoute allowedRoles={[3, 6]} requirePermission="check">
             <CheckerHomePage />
           </ProtectedRoute>
         }
@@ -149,31 +159,17 @@ function AppRoutes() {
       <Route
         path="/checker/import/:importId"
         element={
-          <ProtectedRoute allowedRoles={[2, 3]}>
+          <ProtectedRoute allowedRoles={[3, 6]} requirePermission="check">
             <CheckerImportReviewPage />
           </ProtectedRoute>
         }
       />
 
       {/* Admin Routes */}
-      <Route
-        path="/admin"
-        element={
-          <ProtectedRoute allowedRoles={[3]}>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
+
 
       {/* Dashboard Route */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        }
-      />
+
 
       {/* Default redirect */}
       <Route path="/" element={<Navigate to="/login" replace />} />

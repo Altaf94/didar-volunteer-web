@@ -17,6 +17,7 @@ import { SummaryCard, RegionProgressCard } from '../../components/volunteer/Stat
 import { colors } from '../../theme';
 import { useVolunteer } from '../../context/VolunteerContext';
 import { useAuth } from '../../context/AuthContext';
+import { usePermissions } from '../../hooks/usePermissions';
 import { VolunteerStatus, UserLevel } from '../../types/volunteer';
 import { getRegionLabel } from '../../constants/volunteerConstants';
 import volunteerApiService from '../../services/volunteerApi';
@@ -45,6 +46,7 @@ const CheckerHomePage = () => {
   } = useVolunteer();
 
   const { logout, userRole } = useAuth();
+  const { canCheck } = usePermissions();
 
   const loadMakerDecisions = useCallback(async () => {
     setMakerDecisionsLoading(true);
@@ -121,18 +123,21 @@ const CheckerHomePage = () => {
   return (
     <div className="checker-home">
       <Header
-        title="Checker Dashboard"
-        subtitle={isNationalLevel ? 'National Level' : userRegion ? getRegionLabel(userRegion) : 'Regional Level'}
+        title="Welcome to Volunteer Portal"
+        subtitle={isNationalLevel ? 'National Level' : userRegion ? getRegionLabel(userRegion) : ''}
         onLogout={handleLogout}
       />
 
       <div className="checker-home-content">
+
+
         {/* Summary Cards */}
         <div className="summary-container">
           <div className="summary-row">
             <div
-              className="summary-card-wrapper"
-              onClick={() => navigate('/checker/review')}
+              className={`summary-card-wrapper ${!canCheck ? 'disabled' : ''}`}
+              onClick={canCheck ? () => navigate('/checker/review') : () => alert('You do not have permission to review submissions.')}
+              style={{ opacity: canCheck ? 1 : 0.6, cursor: canCheck ? 'pointer' : 'not-allowed' }}
             >
               <SummaryCard
                 title="Pending Review"
@@ -142,8 +147,9 @@ const CheckerHomePage = () => {
               />
             </div>
             <div
-              className="summary-card-wrapper"
-              onClick={() => navigate('/checker/print')}
+              className={`summary-card-wrapper ${!canCheck ? 'disabled' : ''}`}
+              onClick={canCheck ? () => navigate('/checker/print') : () => alert('You do not have permission to print badges.')}
+              style={{ opacity: canCheck ? 1 : 0.6, cursor: canCheck ? 'pointer' : 'not-allowed' }}
             >
               <SummaryCard
                 title="Ready to Print"
@@ -160,21 +166,23 @@ const CheckerHomePage = () => {
           <h2 className="section-title">Quick Actions</h2>
           <div className="actions-container">
             <div
-              className="action-card review-card"
-              onClick={() => navigate('/checker/review')}
+              className={`action-card review-card ${!canCheck ? 'disabled' : ''}`}
+              onClick={canCheck ? () => navigate('/checker/review') : () => alert('You do not have permission to review submissions.')}
+              style={{ opacity: canCheck ? 1 : 0.5, cursor: canCheck ? 'pointer' : 'not-allowed' }}
             >
               <FileCheck size={32} color={colors.white} />
               <h3 className="action-title">Review Submissions</h3>
-              <p className="action-subtitle">{pendingReviewCount} pending</p>
+              <p className="action-subtitle">{canCheck ? `${pendingReviewCount} pending` : ''}</p>
             </div>
 
             <div
-              className="action-card print-card"
-              onClick={() => navigate('/checker/print')}
+              className={`action-card print-card ${!canCheck ? 'disabled' : ''}`}
+              onClick={canCheck ? () => navigate('/checker/print') : () => alert('You do not have permission to print badges.')}
+              style={{ opacity: canCheck ? 1 : 0.5, cursor: canCheck ? 'pointer' : 'not-allowed' }}
             >
               <Printer size={32} color={colors.white} />
               <h3 className="action-title">Print Badges</h3>
-              <p className="action-subtitle">{readyToPrintCount} ready</p>
+              <p className="action-subtitle">{canCheck ? `${readyToPrintCount} ready` : ''}</p>
             </div>
           </div>
         </section>

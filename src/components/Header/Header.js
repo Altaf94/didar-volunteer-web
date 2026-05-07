@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { ChevronDown, Bell, LogOut, Key } from 'lucide-react';
+import { ChevronDown, LogOut, Key } from 'lucide-react';
 import { colors } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import { decodeJWT } from '../../utils/base64';
 import './Header.css';
 
 const Header = ({
-  title = 'Welcome to MHIP',
+  title = 'Welcome',
   subtitle,
-  showNotifications = true,
+  showNotifications = false,
   showProfile = true,
   onLogout,
   onChangePassword,
@@ -102,7 +102,7 @@ const Header = ({
   };
 
   const renderTitle = () => {
-    if (title === 'Welcome to MHIP') {
+    if (title === 'Welcome') {
       return (
         <>
           <span className="header-title-text">Welcome to</span>
@@ -125,9 +125,7 @@ const Header = ({
     <header className="header">
       <div className="header-left">
         <div className="header-logo">
-          <div className="logo-placeholder">
-            <span>MHIP</span>
-          </div>
+          <img src="/ismaililogo.png" alt="Logo" style={{ width: 48, height: 48, borderRadius: 12 }} />
         </div>
         <div className="header-title-container">
           <h1 className="header-title">{renderTitle()}</h1>
@@ -137,11 +135,7 @@ const Header = ({
 
       {showProfile && (
         <div className="header-right" ref={dropdownRef}>
-          {showNotifications && (
-            <button className="header-notification-btn">
-              <Bell size={20} color={colors.textPrimary} />
-            </button>
-          )}
+          {/* Notification bell removed */}
           
           <div className="header-profile">
             <button

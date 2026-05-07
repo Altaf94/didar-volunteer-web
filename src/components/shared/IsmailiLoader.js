@@ -12,8 +12,8 @@ const IsmailiLoader = ({
   return (
     <div className="loader-overlay">
       <div className="loader-content">
-        <div className="loader-spinner">
-          <div className="spinner-ring"></div>
+        <div className="loader-logo-flip">
+          <img src="/ismaililogo.png" alt="Logo" className="flip-animation" style={{ width: 56, height: 56, borderRadius: 12 }} />
         </div>
         <p className="loader-message">{message}</p>
         <p className="loader-sub-message">{subMessage}</p>

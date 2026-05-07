@@ -18,19 +18,7 @@
   height: 48px;
 }
 
-.logo-placeholder {
-  width: 48px;
-  height: 48px;
-  background-color: #306F45;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #FFFFFF;
-  font-weight: 700;
-  font-size: 12px;
-}
-
+/* .logo-placeholder removed */
 .header-title-container {
   display: flex;
   flex-direction: column;

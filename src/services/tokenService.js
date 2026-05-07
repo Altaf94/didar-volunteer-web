@@ -133,6 +133,42 @@ class TokenService {
     }
   }
 
+  // Get user permissions from token
+  getUserPermissions() {
+    const token = this.getAccessToken();
+    if (!token) return null;
+
+    try {
+      const payload = JSON.parse(this.safeBase64Decode(token.split('.')[1]));
+      return {
+        canView: payload.can_view ?? false,
+        canMake: payload.can_make ?? false,
+        canCheck: payload.can_check ?? false,
+      };
+    } catch (error) {
+      console.error('Error getting user permissions:', error);
+      return null;
+    }
+  }
+
+  // Check if user can view
+  canView() {
+    const permissions = this.getUserPermissions();
+    return permissions?.canView ?? false;
+  }
+
+  // Check if user can make (upload/approve)
+  canMake() {
+    const permissions = this.getUserPermissions();
+    return permissions?.canMake ?? false;
+  }
+
+  // Check if user can check (review/approve maker decisions)
+  canCheck() {
+    const permissions = this.getUserPermissions();
+    return permissions?.canCheck ?? false;
+  }
+
   // Check if user is authenticated
   isAuthenticated() {
     const token = this.getAccessToken();

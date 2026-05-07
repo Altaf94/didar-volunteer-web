@@ -7,7 +7,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Upload,
-  FileCheck,
   Send,
   FileSpreadsheet,
   Clock,
@@ -18,6 +17,7 @@ import { SummaryCard } from '../../components/volunteer/StatsCard';
 import { colors } from '../../theme';
 import { useVolunteer } from '../../context/VolunteerContext';
 import { useAuth } from '../../context/AuthContext';
+import { usePermissions } from '../../hooks/usePermissions';
 import volunteerApiService from '../../services/volunteerApi';
 import { tokenService } from '../../services/tokenService';
 import { getRegionLabel } from '../../constants/volunteerConstants';
@@ -37,6 +37,7 @@ const MakerHomePage = () => {
   const [importGroups, setImportGroups] = useState({});
 
   const { logout } = useAuth();
+  const { canView, canMake } = usePermissions();
 
   const loadByImportOrUser = useCallback(async () => {
     try {
@@ -128,6 +129,10 @@ const MakerHomePage = () => {
   })();
 
   const openMakerReview = () => {
+    if (!canMake) {
+      alert('You do not have permission to review and approve records.');
+      return;
+    }
     if (firstPendingImportId) {
       navigate(`/maker/review?batchId=${encodeURIComponent(firstPendingImportId)}`);
       return;
@@ -147,8 +152,8 @@ const MakerHomePage = () => {
   return (
     <div className="maker-home">
       <Header
-        title="Maker Dashboard"
-        subtitle={userRegion ? getRegionLabel(userRegion) : 'Select Region'}
+        title="Welcome to Volunteer Portal"
+        subtitle={userRegion ? getRegionLabel(userRegion) : ''}
         onLogout={handleLogout}
       />
 
@@ -157,8 +162,9 @@ const MakerHomePage = () => {
         <div className="summary-container">
           <div className="summary-row">
             <div
-              className="summary-card-wrapper"
-              onClick={openMakerReview}
+              className={`summary-card-wrapper ${!canMake ? 'disabled' : ''}`}
+              onClick={canMake ? openMakerReview : undefined}
+              style={{ opacity: canMake ? 1 : 0.6, cursor: canMake ? 'pointer' : 'not-allowed' }}
             >
               <SummaryCard
                 title="Pending"
@@ -168,8 +174,9 @@ const MakerHomePage = () => {
               />
             </div>
             <div
-              className="summary-card-wrapper"
-              onClick={openMakerReview}
+              className={`summary-card-wrapper ${!canMake ? 'disabled' : ''}`}
+              onClick={canMake ? openMakerReview : undefined}
+              style={{ opacity: canMake ? 1 : 0.6, cursor: canMake ? 'pointer' : 'not-allowed' }}
             >
               <SummaryCard
                 title="Submitted"
@@ -182,27 +189,23 @@ const MakerHomePage = () => {
           
         </div>
 
+
+
         {/* Quick Actions */}
         <section className="section">
           <h2 className="section-title">Quick Actions</h2>
           <div className="actions-container">
             <div
-              className="action-card upload-card"
-              onClick={() => navigate('/maker/upload')}
+              className={`action-card upload-card ${!canMake ? 'disabled' : ''}`}
+              onClick={canMake ? () => navigate('/maker/upload') : () => alert('You do not have permission to upload data.')}
+              style={{ opacity: canMake ? 1 : 0.5, cursor: canMake ? 'pointer' : 'not-allowed' }}
             >
               <Upload size={32} color={colors.white} />
               <h3 className="action-title">Upload Data</h3>
-              <p className="action-subtitle">Import Excel file</p>
+              <p className="action-subtitle">{canMake ? 'Import Excel file' : ''}</p>
             </div>
 
-            <div
-              className="action-card review-card"
-              onClick={openMakerReview}
-            >
-              <FileCheck size={32} color={colors.white} />
-              <h3 className="action-title">Review Records</h3>
-              <p className="action-subtitle">Approve or reject</p>
-            </div>
+
           </div>
         </section>
 
@@ -247,12 +250,17 @@ const MakerHomePage = () => {
                             <div className="import-count-label">Total Records</div>
                           </div>
                           <div className="import-summary-actions">
-                            <button
-                              className="view-btn"
-                              onClick={() => navigate('/maker/review', { state: { batchId: importId } })}
-                            >
-                              View
-                            </button>
+                            {canView && (
+                              <button
+                                className="view-btn"
+                                onClick={() => {
+                                  navigate('/maker/review', { state: { batchId: importId } });
+                                }}
+                                style={{ opacity: 1, cursor: 'pointer' }}
+                              >
+                                View
+                              </button>
+                            )}
                           </div>
                         </div>
                       );

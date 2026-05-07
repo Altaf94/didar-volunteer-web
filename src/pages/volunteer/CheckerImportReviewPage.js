@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header/Header';
 import IsmailiLoader from '../../components/shared/IsmailiLoader';
+import { usePermissions } from '../../hooks/usePermissions';
 import volunteerApiService from '../../services/volunteerApi';
 import { tokenService } from '../../services/tokenService';
 import { getAccessLevelLabel, getDutyById, getDutyByCode } from '../../constants/volunteerConstants';
@@ -29,6 +30,7 @@ const CheckerImportReviewPage = () => {
   const [pendingActions, setPendingActions] = useState({});
   const [submittingActions, setSubmittingActions] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { canCheck } = usePermissions();
 
   const importId = importIdParam != null ? String(importIdParam) : '';
   const makerRecordsFromState = location.state?.makerRecords;
@@ -267,6 +269,10 @@ const CheckerImportReviewPage = () => {
   };
 
   const onCheckerAction = (action, record) => {
+    if (!canCheck) {
+      alert('You do not have permission to approve or reject records.');
+      return;
+    }
     const recordId = getRecordId(record);
     if (recordId == null) return;
     const oppositeAction = action === 'approve' ? 'reject' : 'approve';
@@ -329,6 +335,10 @@ const CheckerImportReviewPage = () => {
   };
 
   const onSubmitActions = async () => {
+    if (!canCheck) {
+      alert('You do not have permission to submit checker decisions.');
+      return;
+    }
     if (records.length === 0 || submittingActions) return;
     setSubmittingActions(true);
     try {
@@ -445,6 +455,9 @@ const CheckerImportReviewPage = () => {
                                 type="button"
                                 className={`checker-btn checker-btn-approve${pendingActions[String(getRecordId(r))] === 'approve' ? ' selected' : ''}`}
                                 onClick={() => onCheckerAction('approve', r)}
+                                disabled={!canCheck}
+                                style={{ opacity: canCheck ? 1 : 0.6, cursor: canCheck ? 'pointer' : 'not-allowed' }}
+                                title={!canCheck ? 'No permission to approve' : ''}
                               >
                                 Approve
                               </button>
@@ -452,6 +465,9 @@ const CheckerImportReviewPage = () => {
                                 type="button"
                                 className={`checker-btn checker-btn-reject${pendingActions[String(getRecordId(r))] === 'reject' ? ' selected' : ''}`}
                                 onClick={() => onCheckerAction('reject', r)}
+                                disabled={!canCheck}
+                                style={{ opacity: canCheck ? 1 : 0.6, cursor: canCheck ? 'pointer' : 'not-allowed' }}
+                                title={!canCheck ? 'No permission to reject' : ''}
                               >
                                 Reject
                               </button>
@@ -516,9 +532,11 @@ const CheckerImportReviewPage = () => {
               type="button"
               className="approve-btn checker-submit-btn"
               onClick={onSubmitActions}
-              disabled={records.length === 0 || submittingActions || submitted || alreadySubmitted}
+              disabled={!canCheck || records.length === 0 || submittingActions || submitted || alreadySubmitted}
+              style={{ opacity: canCheck ? 1 : 0.6 }}
+              title={!canCheck ? 'You do not have permission to submit decisions' : ''}
             >
-              {submittingActions ? 'Submitting...' : submitted || alreadySubmitted ? 'Submitted' : 'Submit'}
+              {submittingActions ? 'Submitting...' : submitted || alreadySubmitted ? 'Submitted' : canCheck ? 'Submit' : 'No Permission'}
             </button>
           </div>
         )}

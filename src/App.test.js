@@ -17,6 +17,6 @@ afterEach(() => {
 test('renders the login experience', async () => {
   render(<App />);
   expect(
-    await screen.findByRole('heading', { name: /welcome to mhip/i })
+    await screen.findByRole('heading', { name: /welcome/i })
   ).toBeInTheDocument();
 });

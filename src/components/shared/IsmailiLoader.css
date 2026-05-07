@@ -1,3 +1,22 @@
+.loader-logo-flip {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.flip-animation {
+  animation: coin-flip 1s linear infinite;
+  transform-style: preserve-3d;
+}
+
+@keyframes coin-flip {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(360deg);
+  }
+}
 .loader-overlay {
   position: fixed;
   top: 0;

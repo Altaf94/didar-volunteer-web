@@ -56,7 +56,7 @@ const VolunteerUploadPage = () => {
     <div className="upload-page">
       <Header
         title="Upload Volunteer Data"
-        subtitle={userRegion ? getRegionLabel(userRegion) : 'Select Region'}
+        subtitle={userRegion ? getRegionLabel(userRegion) : ''}
         onLogout={handleLogout}
       />
 
