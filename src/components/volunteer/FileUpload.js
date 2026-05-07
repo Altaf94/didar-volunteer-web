@@ -452,7 +452,7 @@ const FileUpload = ({
       const recordsPayload = volunteers.map(v => {
         const cnicNormalized = v.cnic.replace(/-/g, '');
         const isRegistered = !notFoundCnics.has(cnicNormalized);
-        return {
+        const record = {
           Sno: v.rowNumber,
           userId: userId,
           cnic: v.cnic,
@@ -465,8 +465,12 @@ const FileUpload = ({
           decisionStatus: 'pending',
           register: isRegistered ? 'Yes' : 'No',
           dataSource: getDataSourceLabel(selectedSource),
-          region: getRegionLabel(effectiveRegion),
         };
+        // Only include region field when it's not hidden (i.e., when region selection is enabled)
+        if (!isRegionDisabled && effectiveRegion) {
+          record.region = getRegionLabel(effectiveRegion);
+        }
+        return record;
       });
 
       // debug: inspect payload to verify accessLevel/dutyType presence
