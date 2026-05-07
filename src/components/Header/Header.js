@@ -79,20 +79,6 @@ const Header = ({
     }
   };
 
-  const getRoleName = (role) => {
-    switch (role) {
-      case 1:
-        return 'Maker';
-      case 2:
-      case 3:
-        return 'Checker';
-      case 4:
-        return 'Admin';
-      default:
-        return 'User';
-    }
-  };
-
   const handleLogout = async () => {
     setIsProfileDropdownOpen(false);
     await logout();
@@ -147,9 +133,6 @@ const Header = ({
               </div>
               <div className="header-user-info">
                 <span className="header-user-name">{userProfile.name}</span>
-                {userProfile.role && (
-                  <span className="header-user-role">{getRoleName(userProfile.role)}</span>
-                )}
               </div>
               <ChevronDown
                 size={16}

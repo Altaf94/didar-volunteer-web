@@ -223,13 +223,6 @@ const CheckerImportReviewPage = () => {
     return cnic.toLowerCase().includes(q) || name.toLowerCase().includes(q);
   });
 
-  // If all records are already decided (no pending/discrepant), treat as already submitted
-  const alreadySubmitted = records.length > 0 && records.every((r) => {
-    const raw = getVal(r, ['decisionStatus', 'decision_status', 'decision']);
-    const s = String(raw ?? '').trim().toLowerCase();
-    return s !== 'pending' && s !== 'discrepant(1)' && s !== 'discrepant(2)' && s !== 'discrepant-1' && s !== 'discrepant-2';
-  });
-
   useEffect(() => {
     const totalPages = Math.max(1, Math.ceil(filteredRecords.length / pageSize));
     setCurrentPage((p) => Math.min(Math.max(1, p), totalPages));
@@ -532,11 +525,11 @@ const CheckerImportReviewPage = () => {
               type="button"
               className="approve-btn checker-submit-btn"
               onClick={onSubmitActions}
-              disabled={!canCheck || records.length === 0 || submittingActions || submitted || alreadySubmitted}
+              disabled={!canCheck || records.length === 0 || submittingActions || submitted}
               style={{ opacity: canCheck ? 1 : 0.6 }}
               title={!canCheck ? 'You do not have permission to submit decisions' : ''}
             >
-              {submittingActions ? 'Submitting...' : submitted || alreadySubmitted ? 'Submitted' : canCheck ? 'Submit' : 'No Permission'}
+              {submittingActions ? 'Submitting...' : submitted ? 'Submitted' : canCheck ? 'Submit' : 'No Permission'}
             </button>
           </div>
         )}
