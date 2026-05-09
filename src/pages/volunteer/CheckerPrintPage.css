@@ -1,0 +1,443 @@
+/* ============================================
+   CHECKER PRINT PAGE STYLES
+   ============================================ */
+
+.checker-print {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.checker-print-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+/* Actions Bar */
+.actions-bar {
+  margin-bottom: 24px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background-color: #f8f8f8;
+  border-color: #ccc;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background-color: #fff;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.empty-state h3 {
+  margin: 16px 0 8px;
+  font-size: 20px;
+  color: #333;
+}
+
+.empty-state p {
+  color: #666;
+  font-size: 14px;
+}
+
+/* Error Container */
+.error-container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 24px;
+  background-color: #fff;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.error-message {
+  color: #d32f2f;
+  margin-bottom: 20px;
+  font-size: 16px;
+}
+
+/* Imports Container */
+.imports-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Import Section */
+.import-section {
+  background-color: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.import-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+/* Show/Hide for Screen vs Print */
+.screen-only {
+  display: block;
+}
+
+.print-only {
+  display: none;
+}
+
+/* Table Container - Visible on screen */
+.table-container {
+  overflow-x: auto;
+}
+
+.volunteers-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.volunteers-table thead {
+  background-color: #f8f9fa;
+}
+
+.volunteers-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #e0e0e0;
+  white-space: nowrap;
+}
+
+.volunteers-table tbody tr {
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.volunteers-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+.volunteers-table td {
+  padding: 14px 16px;
+  color: #555;
+}
+
+.volunteers-table td.cnic {
+  font-family: monospace;
+  font-weight: 500;
+  color: #333;
+}
+
+.volunteers-table td.name {
+  font-weight: 500;
+  color: #333;
+}
+
+/* Status Badge */
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-badge.ok {
+  background-color: #e8f5e9;
+  color: #2e7d32;
+}
+
+.status-badge.pending {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.status-badge.rejected {
+  background-color: #ffebee;
+  color: #c62828;
+}
+
+/* ============================================
+   BADGE STYLES - 5cm x 7cm
+   Hidden on screen, visible on print
+   ============================================ */
+
+/* Badges Grid - Hidden by default */
+.badges-grid {
+  display: none;
+  grid-template-columns: repeat(auto-fill, minmax(5cm, 1fr));
+  gap: 1cm;
+  padding: 20px 0;
+}
+
+/* Badge Card - 5cm x 7cm */
+.badge-card {
+  width: 5cm;
+  height: 7cm;
+  background: #fff;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  page-break-inside: avoid;
+  box-sizing: border-box;
+}
+
+/* Side label - absolutely positioned */
+.badge-side-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0.65cm;
+  background: linear-gradient(180deg, #5f6fb7 0%, #4a5a9e 100%);
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+/* Table layout forces centering */
+.badge-table {
+  width: 100%;
+  height: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.badge-cell-top {
+  text-align: center;
+  vertical-align: top;
+  padding: 8px 4px 0 4px;
+  width: 100%;
+}
+
+.badge-cell-bottom {
+  text-align: center;
+  vertical-align: bottom;
+  padding: 0 4px 8px 4px;
+  width: 100%;
+}
+
+.badge-hr {
+  border: none;
+  border-top: 1px solid #e0e0e0;
+  margin: 4px 0;
+}
+
+/* Event text */
+.badge-event-text {
+  font-size: 10px;
+  font-weight: 600;
+  color: #333;
+}
+
+/* Duty type text */
+.badge-duty-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5f6fb7;
+}
+
+/* Person name */
+.badge-name-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: #000;
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+
+/* CNIC */
+.badge-cnic-text {
+  font-size: 9px;
+  font-weight: 600;
+  font-family: monospace;
+  color: #888;
+  letter-spacing: 0.3px;
+}
+
+/* Import Info Header Styles */
+.import-info {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.import-info h2 {
+  font-size: 20px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.badge-count {
+  padding: 6px 12px;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.import-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.download-btn {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.download-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.print-btn {
+  background-color: #00796b;
+  color: #fff;
+}
+
+.print-btn:hover {
+  background-color: #00695c;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Hide screen elements */
+  .actions-bar,
+  .import-actions,
+  .back-btn,
+  .import-header,
+  .screen-only {
+    display: none !important;
+  }
+
+  /* Show print elements */
+  .print-only {
+    display: grid !important;
+  }
+
+  .checker-print-content {
+    max-width: 100%;
+    padding: 0;
+    margin: 0;
+  }
+
+  .import-section {
+    box-shadow: none;
+    padding: 0.5cm;
+    page-break-after: always;
+    border-radius: 0;
+  }
+
+  .badges-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 5cm);
+    gap: 0.5cm;
+    padding: 0;
+  }
+
+  .badge-card {
+    box-shadow: none;
+    border: 1px solid #333;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure exact dimensions for print */
+  @page {
+    size: A4;
+    margin: 1cm;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .checker-print-content {
+    padding: 16px;
+  }
+
+  .import-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .import-actions {
+    width: 100%;
+  }
+
+  .action-btn {
+    flex: 1;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .volunteers-table {
+    min-width: 700px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1200px) {
+  /* Responsive styles for tablet */
+}
+
+@media (min-width: 1201px) {
+  /* Responsive styles for desktop */
+}

@@ -32,6 +32,12 @@ const CheckerHomePage = () => {
   const [makerDecisions, setMakerDecisions] = useState(null);
   const [makerDecisionsLoading, setMakerDecisionsLoading] = useState(false);
   const [makerDecisionsError, setMakerDecisionsError] = useState(null);
+  
+  // State for print-ready data
+  const [printReadyData, setPrintReadyData] = useState(null);
+  const [printReadyLoading, setPrintReadyLoading] = useState(false);
+  const [printReadyError, setPrintReadyError] = useState(null);
+  const [showPrintReady, setShowPrintReady] = useState(false);
 
   const {
     volunteersLoading,
@@ -116,6 +122,39 @@ const CheckerHomePage = () => {
     navigate('/login');
   };
 
+  const handlePrintBadges = async () => {
+    if (!canCheck) {
+      alert('You do not have permission to print badges.');
+      return;
+    }
+    
+    setPrintReadyLoading(true);
+    setPrintReadyError(null);
+    setShowPrintReady(true);
+    
+    try {
+      console.log('Fetching maker decisions ready for printing...');
+      const data = await volunteerApiService.getMakerDecisionsOk();
+      console.log('Maker decisions OK:', data);
+      setPrintReadyData(data);
+    } catch (err) {
+      console.error('Failed to fetch maker decisions:', err);
+      setPrintReadyError(err.message || 'Failed to load print data');
+      setPrintReadyData(null);
+    } finally {
+      setPrintReadyLoading(false);
+    }
+  };
+
+  const handleViewPrintImport = (importId, records) => {
+    navigate('/checker/print', { 
+      state: { 
+        printData: { [importId]: records },
+        importId 
+      } 
+    });
+  };
+
   if ((volunteersLoading || dashboardLoading) && !refreshing) {
     return <IsmailiLoader message="Loading Dashboard..." />;
   }
@@ -148,7 +187,7 @@ const CheckerHomePage = () => {
             </div>
             <div
               className={`summary-card-wrapper ${!canCheck ? 'disabled' : ''}`}
-              onClick={canCheck ? () => navigate('/checker/print') : () => alert('You do not have permission to print badges.')}
+              onClick={handlePrintBadges}
               style={{ opacity: canCheck ? 1 : 0.6, cursor: canCheck ? 'pointer' : 'not-allowed' }}
             >
               <SummaryCard
@@ -177,7 +216,7 @@ const CheckerHomePage = () => {
 
             <div
               className={`action-card print-card ${!canCheck ? 'disabled' : ''}`}
-              onClick={canCheck ? () => navigate('/checker/print') : () => alert('You do not have permission to print badges.')}
+              onClick={handlePrintBadges}
               style={{ opacity: canCheck ? 1 : 0.5, cursor: canCheck ? 'pointer' : 'not-allowed' }}
             >
               <Printer size={32} color={colors.white} />
@@ -240,6 +279,62 @@ const CheckerHomePage = () => {
                               state: { makerRecords: list },
                             })
                           }
+                        >
+                          View
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* Ready to Print Section - Displayed after clicking Print Badges */}
+        {showPrintReady && (
+          <section className="section ready-to-print-section">
+            <div className="section-header">
+              <h2 className="section-title">Ready to Print</h2>
+              {printReadyData && Object.keys(printReadyData).length > 0 && (
+                <button
+                  type="button"
+                  className="view-all-btn"
+                  onClick={() => navigate('/checker/print', { state: { printData: printReadyData } })}
+                >
+                  View All
+                </button>
+              )}
+            </div>
+            {printReadyError && (
+              <p className="recent-uploads-error" role="alert">
+                {printReadyError}
+              </p>
+            )}
+            <div className="recent-uploads-panel">
+              {printReadyLoading && !printReadyData && (
+                <p className="recent-uploads-placeholder">Loading print data…</p>
+              )}
+              {!printReadyLoading && !printReadyError && (!printReadyData || Object.keys(printReadyData).length === 0) && (
+                <p className="recent-uploads-placeholder">No badges ready to print.</p>
+              )}
+              {printReadyData && Object.entries(printReadyData).length > 0 && (
+                <div className="recent-uploads-grid">
+                  {Object.entries(printReadyData).map(([importId, records]) => {
+                    const list = Array.isArray(records) ? records : [];
+                    return (
+                      <div key={importId} className="recent-upload-card">
+                        <p className="recent-upload-id-line">
+                          Import ID: <strong>{importId}</strong>
+                        </p>
+                        <div className="recent-upload-total" aria-label="Total records">
+                          {list.length}
+                        </div>
+                        <p className="recent-upload-total-label">Total Records</p>
+                        <button
+                          type="button"
+                          className="recent-upload-view-btn"
+                          onClick={() => handleViewPrintImport(importId, list)}
                         >
                           View
                         </button>

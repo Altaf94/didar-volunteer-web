@@ -134,6 +134,11 @@ class VolunteerApiService {
     return this.makeRequest('/api/volunteers/maker-decisions', { method: 'GET' });
   }
 
+  /** GET approved maker decisions ready for printing. */
+  async getMakerDecisionsOk() {
+    return this.makeRequest('/api/volunteers/maker-decisions-ok', { method: 'GET' });
+  }
+
   /** Checker submits approve/reject for an import. */
   async submitMakerDecisionsByImport(body) {
     return this.makeRequest('/api/volunteers/maker-decisions/submit', {

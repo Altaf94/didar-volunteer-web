@@ -10,6 +10,7 @@ import MakerHomePage from './pages/volunteer/MakerHomePage';
 import MakerReviewPage from './pages/volunteer/MakerReviewPage';
 import CheckerHomePage from './pages/volunteer/CheckerHomePage';
 import CheckerImportReviewPage from './pages/volunteer/CheckerImportReviewPage';
+import CheckerPrintPage from './pages/volunteer/CheckerPrintPage';
 import VolunteerUploadPage from './pages/volunteer/VolunteerUploadPage';
 
 
@@ -144,7 +145,7 @@ function AppRoutes() {
         path="/checker/print"
         element={
           <ProtectedRoute allowedRoles={[3, 6]} requirePermission="check">
-            <CheckerHomePage />
+            <CheckerPrintPage />
           </ProtectedRoute>
         }
       />
