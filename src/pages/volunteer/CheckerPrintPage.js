@@ -178,27 +178,13 @@ const CheckerPrintPage = () => {
                 <div className="badges-grid print-only">
                   {records.map((record) => (
                     <div key={record.decisionId || record.id} className="badge-card">
-                      <div className="badge-side-label">{record.accessLevelName || 'STAGE AREA'}</div>
-                      <table className="badge-table" cellPadding="0" cellSpacing="0">
-                        <tbody>
-                          <tr>
-                            <td className="badge-cell-top">
-                              <img src="/ismaililogo.png" alt="logo" style={{ width: '45px', height: '45px' }} />
-                              <br/>
-                              <span className="badge-event-text">{record.eventName || 'Pakistan Visit'}</span>
-                              <hr className="badge-hr"/>
-                              <span className="badge-duty-text">{record.dutyTypeName || 'SECURITY TEAM'}</span>
-                            </td>
-                          </tr>
-                          <tr>
-                            <td className="badge-cell-bottom">
-                              <span className="badge-name-text">{record.name}</span>
-                              <br/>
-                              <span className="badge-cnic-text">{record.cnic}</span>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
+                      <div className="badge-content">
+                        <div className="badge-field">{record.accessLevelName || 'Access Level'}</div>
+                        <div className="badge-field">{record.eventName || 'Event'}</div>
+                        <div className="badge-field">{record.dutyTypeName || 'Duty Type'}</div>
+                        <div className="badge-field badge-name">{record.name}</div>
+                        <div className="badge-field badge-cnic">{record.cnic}</div>
+                      </div>
                     </div>
                   ))}
                 </div>

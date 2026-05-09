@@ -185,110 +185,58 @@
 }
 
 /* ============================================
-   BADGE STYLES - 5cm x 7cm
+   BADGE STYLES - Simple Label Format
    Hidden on screen, visible on print
    ============================================ */
 
 /* Badges Grid - Hidden by default */
 .badges-grid {
   display: none;
-  grid-template-columns: repeat(auto-fill, minmax(5cm, 1fr));
-  gap: 1cm;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5cm;
   padding: 20px 0;
 }
 
-/* Badge Card - 5cm x 7cm */
+/* Badge Card - Simple Label */
 .badge-card {
   width: 5cm;
-  height: 7cm;
+  height: auto;
+  min-height: 3cm;
   background: #fff;
-  border: 1px solid #d0d0d0;
-  border-radius: 8px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  page-break-inside: avoid;
+  border: 1px solid #333;
+  padding: 0.3cm;
   box-sizing: border-box;
+  page-break-inside: avoid;
 }
 
-/* Side label - absolutely positioned */
-.badge-side-label {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 0.65cm;
-  background: linear-gradient(180deg, #5f6fb7 0%, #4a5a9e 100%);
-  color: white;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
+/* Badge Content - Vertical Layout */
+.badge-content {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  z-index: 1;
-}
-
-/* Table layout forces centering */
-.badge-table {
-  width: 100%;
-  height: 100%;
-  border-collapse: collapse;
-  table-layout: fixed;
-}
-
-.badge-cell-top {
   text-align: center;
-  vertical-align: top;
-  padding: 8px 4px 0 4px;
-  width: 100%;
+  gap: 2px;
 }
 
-.badge-cell-bottom {
-  text-align: center;
-  vertical-align: bottom;
-  padding: 0 4px 8px 4px;
-  width: 100%;
-}
-
-.badge-hr {
-  border: none;
-  border-top: 1px solid #e0e0e0;
-  margin: 4px 0;
-}
-
-/* Event text */
-.badge-event-text {
+/* Badge Field */
+.badge-field {
   font-size: 10px;
-  font-weight: 600;
-  color: #333;
-}
-
-/* Duty type text */
-.badge-duty-text {
-  font-size: 11px;
-  font-weight: 700;
-  color: #5f6fb7;
-}
-
-/* Person name */
-.badge-name-text {
-  font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   color: #000;
-  text-transform: uppercase;
-  line-height: 1.3;
+  line-height: 1.4;
 }
 
-/* CNIC */
-.badge-cnic-text {
-  font-size: 9px;
-  font-weight: 600;
+/* Name - slightly larger */
+.badge-field.badge-name {
+  font-weight: 700;
+  font-size: 11px;
+}
+
+/* CNIC - monospace */
+.badge-field.badge-cnic {
   font-family: monospace;
-  color: #888;
-  letter-spacing: 0.3px;
+  font-size: 10px;
 }
 
 /* Import Info Header Styles */
@@ -387,14 +335,17 @@
   .badges-grid {
     display: grid;
     grid-template-columns: repeat(3, 5cm);
-    gap: 0.5cm;
+    gap: 0.3cm;
     padding: 0;
   }
 
   .badge-card {
-    box-shadow: none;
     border: 1px solid #333;
     page-break-inside: avoid;
+  }
+
+  .badge-content {
+    padding: 0.2cm;
   }
 
   /* Ensure exact dimensions for print */
