@@ -196,13 +196,7 @@ class ApiService {
     }
 
     try {
-      // IMPORTANT:
-      // Backend main.py mein JSON login route /login-json hai.
-      // Isliye yahan /api/volunteers/auth/login nahi, /login-json use hoga.
-      const loginUrl = `${this.baseUrl}/login-json`;
-
-      console.log('Real login URL:', loginUrl);
-
+     const loginUrl = `${this.baseUrl}/api/volunteers/auth/login`;
       const response = await fetch(loginUrl, {
         method: 'POST',
         headers: {
