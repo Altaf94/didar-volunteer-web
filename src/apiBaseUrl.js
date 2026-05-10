@@ -110,17 +110,14 @@ if (isDev) {
 
 // Final API base URL.
 // IMPORTANT: do not force 8000 here. Backend is running on 8001.
-export const API_BASE_URL = resolved || LOCAL_DEV_DEFAULT;
+export const API_BASE_URL = resolved;
 
-export const HEALTH_CHECK_URL = API_BASE_URL
-  ? `${API_BASE_URL}/health`
-  : '/health';
-
-console.log('apiBaseUrl config:', {
-  NODE_ENV: process.env.NODE_ENV,
-  REACT_APP_API_URL: process.env.REACT_APP_API_URL,
-  REACT_APP_API_BASE_URL: process.env.REACT_APP_API_BASE_URL,
-  REACT_APP_SAME_ORIGIN_API: process.env.REACT_APP_SAME_ORIGIN_API,
-  API_BASE_URL,
-  HEALTH_CHECK_URL,
-});
+export const HEALTH_CHECK_URL = (() => {
+  if (API_BASE_URL) {
+    return `${API_BASE_URL}/health`;
+  }
+  if (fromEnv) {
+    return `${fromEnv}/health`;
+  }
+  return '/health';
+})();
