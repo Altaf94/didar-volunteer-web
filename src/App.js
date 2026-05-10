@@ -6,13 +6,15 @@ import LoadingProvider from './context/LoadingProvider';
 
 // Pages
 import LoginPage from './pages/auth/LoginPage';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import ResetPassword from './pages/auth/ResetPassword';
+
 import MakerHomePage from './pages/volunteer/MakerHomePage';
 import MakerReviewPage from './pages/volunteer/MakerReviewPage';
 import CheckerHomePage from './pages/volunteer/CheckerHomePage';
 import CheckerImportReviewPage from './pages/volunteer/CheckerImportReviewPage';
 import CheckerPrintPage from './pages/volunteer/CheckerPrintPage';
 import VolunteerUploadPage from './pages/volunteer/VolunteerUploadPage';
-
 
 import './App.css';
 
@@ -33,9 +35,7 @@ const ProtectedRoute = ({ children, allowedRoles, requirePermission }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // Check role-based access
   if (allowedRoles && !allowedRoles.includes(userRole)) {
-    // Redirect based on role
     if (userRole === 2 || userRole === 5) {
       return <Navigate to="/maker" replace />;
     } else if (userRole === 3 || userRole === 6) {
@@ -43,15 +43,13 @@ const ProtectedRoute = ({ children, allowedRoles, requirePermission }) => {
     }
   }
 
-  // Check permission-based access
   if (requirePermission) {
-    const hasPermission = 
+    const hasPermission =
       (requirePermission === 'view' && permissions?.canView) ||
       (requirePermission === 'make' && permissions?.canMake) ||
       (requirePermission === 'check' && permissions?.canCheck);
-    
+
     if (!hasPermission) {
-      // Redirect to login if insufficient permissions
       return <Navigate to="/login" replace />;
     }
   }
@@ -59,7 +57,7 @@ const ProtectedRoute = ({ children, allowedRoles, requirePermission }) => {
   return children;
 };
 
-// Public Route Component (redirect if authenticated)
+// Public Route Component redirect if authenticated
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, isLoading, userRole } = useAuth();
 
@@ -73,12 +71,12 @@ const PublicRoute = ({ children }) => {
   }
 
   if (isAuthenticated) {
-    // Redirect based on role
     if (userRole === 2 || userRole === 5) {
       return <Navigate to="/maker" replace />;
     } else if (userRole === 3 || userRole === 6) {
       return <Navigate to="/checker" replace />;
     }
+
     return <Navigate to="/login" replace />;
   }
 
@@ -98,6 +96,24 @@ function AppRoutes() {
         }
       />
 
+      <Route
+        path="/forgot-password"
+        element={
+          <PublicRoute>
+            <ForgotPassword />
+          </PublicRoute>
+        }
+      />
+
+      <Route
+        path="/reset-password"
+        element={
+          <PublicRoute>
+            <ResetPassword />
+          </PublicRoute>
+        }
+      />
+
       {/* Maker Routes */}
       <Route
         path="/maker"
@@ -107,6 +123,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/maker/upload"
         element={
@@ -115,6 +132,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/maker/review"
         element={
@@ -133,6 +151,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/checker/review"
         element={
@@ -141,6 +160,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/checker/print"
         element={
@@ -149,6 +169,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/checker/dispatch"
         element={
@@ -157,6 +178,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+
       <Route
         path="/checker/import/:importId"
         element={
@@ -165,12 +187,6 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
-
-      {/* Admin Routes */}
-
-
-      {/* Dashboard Route */}
-
 
       {/* Default redirect */}
       <Route path="/" element={<Navigate to="/login" replace />} />

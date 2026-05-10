@@ -2,10 +2,12 @@
 import { API_BASE_URL, HEALTH_CHECK_URL } from '../apiBaseUrl';
 import { tokenService } from './tokenService';
 import { btoa } from '../utils/base64';
+
 const USE_MOCK_API = false; // Set to true to use mock data instead of real API
 
 console.log('API Configuration:', {
   API_BASE_URL,
+  HEALTH_CHECK_URL,
   USE_MOCK_API,
 });
 
@@ -40,18 +42,23 @@ class ApiService {
       const response = await fetch(url, config);
 
       console.log('Response received:', {
+        url,
         status: response.status,
         statusText: response.statusText,
       });
 
       if (!response.ok) {
         let errorData = {};
+
         try {
           errorData = await response.json();
         } catch (parseError) {
           console.error('Failed to parse error response:', parseError);
-          errorData = { message: `HTTP ${response.status}: ${response.statusText}` };
+          errorData = {
+            message: `HTTP ${response.status}: ${response.statusText}`,
+          };
         }
+
         console.error('API Error Response:', errorData);
         throw new Error(this.formatError(errorData));
       }
@@ -60,19 +67,24 @@ class ApiService {
 
       if (contentType && contentType.includes('application/json')) {
         return await response.json();
-      } else {
-        const textResponse = await response.text();
-        try {
-          return JSON.parse(textResponse);
-        } catch (parseError) {
-          return { message: textResponse };
-        }
+      }
+
+      const textResponse = await response.text();
+
+      try {
+        return JSON.parse(textResponse);
+      } catch (parseError) {
+        return {
+          message: textResponse,
+        };
       }
     } catch (error) {
       console.error('API request failed:', error);
+
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error('Network error: Unable to connect to the server');
       }
+
       throw error;
     }
   }
@@ -80,12 +92,22 @@ class ApiService {
   formatError(errorData) {
     if (errorData.detail) {
       if (Array.isArray(errorData.detail)) {
-        return errorData.detail.map(err => err.msg).join(', ');
+        return errorData.detail.map((err) => err.msg).join(', ');
       }
+
       if (typeof errorData.detail === 'string') {
         return errorData.detail;
       }
+
+      if (typeof errorData.detail === 'object') {
+        return (
+          errorData.detail.message ||
+          errorData.detail.error ||
+          JSON.stringify(errorData.detail)
+        );
+      }
     }
+
     return errorData.message || 'An error occurred';
   }
 
@@ -98,6 +120,7 @@ class ApiService {
 
     try {
       console.log('Testing API connection to:', HEALTH_CHECK_URL);
+
       const response = await fetch(HEALTH_CHECK_URL, {
         method: 'GET',
         headers: {
@@ -105,7 +128,11 @@ class ApiService {
         },
       });
 
-      console.log('Health check response:', response.status);
+      console.log('Health check response:', {
+        status: response.status,
+        ok: response.ok,
+      });
+
       return response.ok;
     } catch (error) {
       console.warn('Health check failed:', error);
@@ -121,7 +148,8 @@ class ApiService {
 
     if (USE_MOCK_API) {
       console.log('Using mock API for login');
-      return new Promise(resolve => {
+
+      return new Promise((resolve) => {
         setTimeout(() => {
           const email = credentials.username.toLowerCase();
           let userRole = 3;
@@ -167,9 +195,13 @@ class ApiService {
       });
     }
 
-    // Real backend call
     try {
-      const loginUrl = `${this.baseUrl}/api/volunteers/auth/login`;
+      // IMPORTANT:
+      // Backend main.py mein JSON login route /login-json hai.
+      // Isliye yahan /api/volunteers/auth/login nahi, /login-json use hoga.
+      const loginUrl = `${this.baseUrl}/login-json`;
+
+      console.log('Real login URL:', loginUrl);
 
       const response = await fetch(loginUrl, {
         method: 'POST',
@@ -185,6 +217,7 @@ class ApiService {
 
       if (!response.ok) {
         let textBody = null;
+
         try {
           textBody = await response.text();
         } catch (e) {
@@ -192,10 +225,13 @@ class ApiService {
         }
 
         let errBody = {};
+
         try {
           errBody = textBody ? JSON.parse(textBody) : {};
         } catch (e) {
-          errBody = { message: textBody || `HTTP ${response.status}: ${response.statusText}` };
+          errBody = {
+            message: textBody || `HTTP ${response.status}: ${response.statusText}`,
+          };
         }
 
         console.error('Login failed:', {
@@ -211,15 +247,28 @@ class ApiService {
             ? errBody.detail
             : Array.isArray(errBody.detail)
               ? errBody.detail.map((e) => e.msg).join(', ')
-              : errBody.message || `Login failed (HTTP ${response.status})`;
+              : errBody.detail?.message ||
+                errBody.message ||
+                `Login failed (HTTP ${response.status})`;
 
         throw new Error(errMsg);
       }
 
       const data = await response.json();
 
-      const access_token = data.access_token || data.token || data.accessToken || null;
-      const refresh_token = data.refresh_token || data.refreshToken || data.refresh || null;
+      console.log('Login success response:', data);
+
+      const access_token =
+        data.access_token ||
+        data.token ||
+        data.accessToken ||
+        null;
+
+      const refresh_token =
+        data.refresh_token ||
+        data.refreshToken ||
+        data.refresh ||
+        null;
 
       return {
         access_token,
@@ -240,20 +289,41 @@ class ApiService {
     });
   }
 
-  async forgotPassword(email) {
-    return this.makeRequest('/api/auth/forgot-password', {
+  // Forgot password
+  async forgotPassword(emailOrPayload) {
+    const email =
+      typeof emailOrPayload === 'string'
+        ? emailOrPayload
+        : emailOrPayload?.email;
+
+    return this.makeRequest('/api/volunteers/auth/forgot-password', {
       method: 'POST',
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({
+        email,
+      }),
+    });
+  }
+
+  // Reset password
+  async resetPassword(payload) {
+    return this.makeRequest('/api/volunteers/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({
+        token: payload.token,
+        new_password: payload.new_password || payload.password,
+      }),
     });
   }
 
   async getProfile() {
     const isAuth = tokenService.isAuthenticated();
+
     if (!isAuth) {
       throw new Error('No authentication token available');
     }
 
     const token = await tokenService.getValidAccessToken();
+
     return this.makeRequest('/profile', {
       method: 'GET',
       headers: {
@@ -267,7 +337,7 @@ class ApiService {
     console.log('Getting users with filters:', filters);
 
     if (USE_MOCK_API) {
-      return new Promise(resolve => {
+      return new Promise((resolve) => {
         setTimeout(() => {
           const mockUsers = [
             {
@@ -326,21 +396,41 @@ class ApiService {
     }
 
     const isAuth = tokenService.isAuthenticated();
+
     if (!isAuth) {
       throw new Error('No authentication token available');
     }
 
     const queryParams = new URLSearchParams();
-    if (filters.RoleId) queryParams.append('RoleId', filters.RoleId.toString());
-    if (filters.StatusId) queryParams.append('StatusId', filters.StatusId.toString());
-    if (filters.Email) queryParams.append('Email', filters.Email);
-    if (filters.JamatKhanaId) queryParams.append('JamatKhanaId', filters.JamatKhanaId);
-    if (filters.PageNumber) queryParams.append('PageNumber', filters.PageNumber.toString());
-    if (filters.PageSize) queryParams.append('PageSize', filters.PageSize.toString());
+
+    if (filters.RoleId) {
+      queryParams.append('RoleId', filters.RoleId.toString());
+    }
+
+    if (filters.StatusId) {
+      queryParams.append('StatusId', filters.StatusId.toString());
+    }
+
+    if (filters.Email) {
+      queryParams.append('Email', filters.Email);
+    }
+
+    if (filters.JamatKhanaId) {
+      queryParams.append('JamatKhanaId', filters.JamatKhanaId);
+    }
+
+    if (filters.PageNumber) {
+      queryParams.append('PageNumber', filters.PageNumber.toString());
+    }
+
+    if (filters.PageSize) {
+      queryParams.append('PageSize', filters.PageSize.toString());
+    }
 
     const endpoint = `/users/?${queryParams.toString()}`;
 
     const token = await tokenService.getValidAccessToken();
+
     return this.makeRequest(endpoint, {
       method: 'GET',
       headers: {
@@ -351,4 +441,5 @@ class ApiService {
 }
 
 const apiService = new ApiService();
+
 export default apiService;
