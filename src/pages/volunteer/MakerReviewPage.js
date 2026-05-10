@@ -326,7 +326,7 @@ const MakerReviewPage = () => {
                     title={!canMake ? 'You do not have permission to approve records' : ''}
                   >
                     <Check size={16} />
-                    {canMake ? (approving ? 'Approving...' : 'Approve') : 'No Permission'}
+                    {canMake ? (approving ? 'Submitting...' : 'Submit To Checke') : 'No Permission'}
                   </button>
                 )}
               </div>

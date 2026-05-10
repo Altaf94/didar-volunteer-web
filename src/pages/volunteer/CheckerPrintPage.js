@@ -12,6 +12,7 @@ import { colors } from '../../theme';
 import { useAuth } from '../../context/AuthContext';
 import volunteerApiService from '../../services/volunteerApi';
 import './CheckerPrintPage.css';
+import { generatePdf } from '../../utils/pdfGenerator';
 
 const CheckerPrintPage = () => {
   const navigate = useNavigate();
@@ -54,10 +55,22 @@ const CheckerPrintPage = () => {
     navigate('/checker');
   };
 
-  const handlePrint = (importId) => {
+  const handlePrint = (importId, records) => {
     console.log('Printing badges for import:', importId);
-    // TODO: Implement actual printing logic
-    window.print();
+    
+    // Convert records to specified format
+    const data = records.map(record => ({
+      field1: record.eventName || '',
+      field2: record.dutyTypeName || '',
+      field3: record.name || '',
+      field4: record.cnic || record.CNIC || '',
+      field5: record.accessLevelName || ''
+    }));
+
+    generatePdf(data, "stickers.pdf")
+    console.log('Formatted print data:', data);
+  
+  
   };
 
   const handleDownload = (importId) => {
@@ -123,16 +136,9 @@ const CheckerPrintPage = () => {
                     <span className="badge-count">{records.length} badges</span>
                   </div>
                   <div className="import-actions">
-                    <button
-                      className="action-btn download-btn"
-                      onClick={() => handleDownload(importId)}
-                    >
-                      <Download size={18} />
-                      Download
-                    </button>
-                    <button
+                      <button
                       className="action-btn print-btn"
-                      onClick={() => handlePrint(importId)}
+                      onClick={() => handlePrint(importId,records)}
                     >
                       <Printer size={18} />
                       Print

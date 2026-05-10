@@ -327,12 +327,19 @@ const CheckerImportReviewPage = () => {
     return item;
   };
 
+  // Check if records are already verified by checker
+  const isAlreadyVerified = records.some((r) => {
+    const reason = String(r?.reason ?? '').trim().toLowerCase();
+    const checkerId = r?.checkerId ?? r?.checker_id;
+    return reason === 'verified by checker';
+  });
+
   const onSubmitActions = async () => {
     if (!canCheck) {
       alert('You do not have permission to submit checker decisions.');
       return;
     }
-    if (records.length === 0 || submittingActions) return;
+    if (records.length === 0 || submittingActions || isAlreadyVerified) return;
     setSubmittingActions(true);
     try {
       // Use per-row actions if set; otherwise approve all records
@@ -524,11 +531,11 @@ const CheckerImportReviewPage = () => {
               type="button"
               className="approve-btn checker-submit-btn"
               onClick={onSubmitActions}
-              disabled={!canCheck || records.length === 0 || submittingActions || submitted}
+              disabled={!canCheck || records.length === 0 || submittingActions || submitted || isAlreadyVerified}
               style={{ opacity: canCheck ? 1 : 0.6 }}
-              title={!canCheck ? 'You do not have permission to submit decisions' : ''}
+              title={!canCheck ? 'You do not have permission to submit decisions' : isAlreadyVerified ? 'Already verified by checker' : ''}
             >
-              {submittingActions ? 'Submitting...' : submitted ? 'Submitted' : canCheck ? 'Submit' : 'No Permission'}
+              {submittingActions ? 'Submitting...' : (submitted || isAlreadyVerified) ? 'Submitted' : canCheck ? 'Submit' : 'No Permission'}
             </button>
           </div>
         )}
