@@ -59,9 +59,16 @@ const CheckerPrintPage = () => {
     console.log('Printing badges for import:', importId);
     
     try {
+      // Format eventName: "Ishkoman - 2" → "Ishkoman Day 2"
+      const formatEventName = (name) => {
+        if (!name) return '';
+        const match = name.match(/^(.+?)\s*-\s*(\d+)$/);
+        return match ? `${match[1].trim()} Day ${match[2]}` : name;
+      };
+
       // Convert records to specified format
       const data = records.map(record => ({
-        field1: record.eventName || '',
+        field1: formatEventName(record.eventName),
         field2: record.dutyTypeName || '',
         field3: record.name || '',
         field4: record.cnic || record.CNIC || '',
