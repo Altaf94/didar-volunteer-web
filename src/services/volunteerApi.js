@@ -147,6 +147,29 @@ class VolunteerApiService {
     });
   }
 
+  /** Mark maker decisions as printed for a given import ID. */
+  async markMakerDecisionsPrinted(importId) {
+    return this.makeRequest(`/api/volunteers/maker-decisions/mark-printed?importId=${encodeURIComponent(importId)}`, {
+      method: 'PATCH',
+    });
+  }
+
+  /** Send forgot-password email (no auth required). */
+  async forgotPassword(email) {
+    return this.makeRequest('/api/volunteers/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  /** Reset password using token from email. */
+  async resetPassword(token, newPassword) {
+    return this.makeRequest('/api/volunteers/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, new_password: newPassword }),
+    });
+  }
+
   async submitVolunteers(volunteerIds) {
     return this.makeRequest('/api/volunteers/submit', {
       method: 'POST',

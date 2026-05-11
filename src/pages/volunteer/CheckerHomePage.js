@@ -53,6 +53,7 @@ const CheckerHomePage = () => {
 
   const { logout, userRole } = useAuth();
   const { canCheck } = usePermissions();
+  console.log(canCheck, 'canCheck');
 
   const loadMakerDecisions = useCallback(async () => {
     setMakerDecisionsLoading(true);
@@ -105,6 +106,7 @@ const CheckerHomePage = () => {
   ).length;
 
   // Ready to Print = imports where checker has decided (no pending/discrepant, checkerId set on at least one record)
+  // and reason is not 'printed'
   const readyToPrintCount = byImportEntries.filter(([, recs]) => {
     if (!Array.isArray(recs) || recs.length === 0) return false;
     const noPending = recs.every((r) => {
@@ -112,7 +114,11 @@ const CheckerHomePage = () => {
       return !PENDING_STATUSES.includes(s);
     });
     const checkerActed = recs.some((r) => r?.checkerId != null && r?.checkerId !== '');
-    return noPending && checkerActed;
+    const notPrinted = recs.some((r) => {
+      const reason = String(r?.reason ?? '').trim().toLowerCase();
+      return reason !== 'printed';
+    });
+    return noPending && checkerActed && notPrinted;
   }).length;
 
   const isNationalLevel = userLevel === UserLevel.NATIONAL;
@@ -176,7 +182,7 @@ const CheckerHomePage = () => {
             <div
               className={`summary-card-wrapper ${!canCheck ? 'disabled' : ''}`}
               onClick={canCheck ? () => navigate('/checker/review') : () => alert('You do not have permission to review submissions.')}
-              style={{ opacity: canCheck ? 1 : 0.6, cursor: canCheck ? 'pointer' : 'not-allowed' }}
+              style={{ opacity: canCheck ? 1 : 0.6, cursor: 'default'}}
             >
               <SummaryCard
                 title="Pending Review"
@@ -187,8 +193,8 @@ const CheckerHomePage = () => {
             </div>
             <div
               className={`summary-card-wrapper ${!canCheck ? 'disabled' : ''}`}
-              onClick={handlePrintBadges}
-              style={{ opacity: canCheck ? 1 : 0.6, cursor: canCheck ? 'pointer' : 'not-allowed' }}
+             
+              style={{ opacity: canCheck ? 1 : 0.6, cursor: 'default' }}
             >
               <SummaryCard
                 title="Ready to Print"
@@ -197,6 +203,8 @@ const CheckerHomePage = () => {
                 color={colors.primary}
               />
             </div>
+
+            
           </div>
         </div>
 
@@ -262,8 +270,13 @@ const CheckerHomePage = () => {
                 <div className="recent-uploads-grid">
                   {byImportEntries.map(([importId, records]) => {
                     const list = Array.isArray(records) ? records : [];
+                    const allPrinted = list.length > 0 && list.every((r) => {
+                      const reason = String(r?.reason ?? '').trim().toLowerCase();
+                      return reason === 'printed';
+                    });
                     return (
-                      <div key={importId} className="recent-upload-card">
+                      <div key={importId} className={`recent-upload-card ${allPrinted ? 'printed' : ''}`}>
+                        {allPrinted && <span className="recent-upload-printed-badge">Printed</span>}
                         <p className="recent-upload-id-line">
                           Import ID: <strong>{importId}</strong>
                         </p>
@@ -322,8 +335,13 @@ const CheckerHomePage = () => {
                 <div className="recent-uploads-grid">
                   {Object.entries(printReadyData).map(([importId, records]) => {
                     const list = Array.isArray(records) ? records : [];
+                    const allPrinted = list.length > 0 && list.every((r) => {
+                      const reason = String(r?.reason ?? '').trim().toLowerCase();
+                      return reason === 'printed';
+                    });
                     return (
-                      <div key={importId} className="recent-upload-card">
+                      <div key={importId} className={`recent-upload-card ${allPrinted ? 'printed' : ''}`}>
+                        {allPrinted && <span className="recent-upload-printed-badge">Printed</span>}
                         <p className="recent-upload-id-line">
                           Import ID: <strong>{importId}</strong>
                         </p>

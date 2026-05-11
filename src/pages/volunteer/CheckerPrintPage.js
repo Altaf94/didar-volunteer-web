@@ -55,28 +55,33 @@ const CheckerPrintPage = () => {
     navigate('/checker');
   };
 
-  const handlePrint = (importId, records) => {
+  const handlePrint = async (importId, records) => {
     console.log('Printing badges for import:', importId);
     
-    // Convert records to specified format
-    const data = records.map(record => ({
-      field1: record.eventName || '',
-      field2: record.dutyTypeName || '',
-      field3: record.name || '',
-      field4: record.cnic || record.CNIC || '',
-      field5: record.accessLevelName || ''
-    }));
+    try {
+      // Convert records to specified format
+      const data = records.map(record => ({
+        field1: record.eventName || '',
+        field2: record.dutyTypeName || '',
+        field3: record.name || '',
+        field4: record.cnic || record.CNIC || '',
+        field5: record.accessLevelName || ''
+      }));
 
-    generatePdf(data, "stickers.pdf")
-    console.log('Formatted print data:', data);
-  
-  
+      generatePdf(data, `stickers_import_${importId}.pdf`);
+      console.log('Formatted print data:', data);
+      
+      // Mark records as printed in the database
+      await volunteerApiService.markMakerDecisionsPrinted(importId);
+      console.log('Successfully marked import as printed:', importId);
+      
+      
+    } catch (err) {
+      console.error('Failed to mark as printed:', err);
+      alert(`Badges printed, but failed to update status: ${err.message}`);
+    }
   };
 
-  const handleDownload = (importId) => {
-    console.log('Downloading badges for import:', importId);
-    // TODO: Implement download logic
-  };
 
   if (loading) {
     return <IsmailiLoader message="Loading print data..." />;

@@ -183,7 +183,8 @@ const CheckerImportReviewPage = () => {
 
     if (hasStatePayload) {
       setLoadError(null);
-      setRecords(filterRowsForImport(makerRecordsFromState));
+      let filteredRecs = filterRowsForImport(makerRecordsFromState);
+      setRecords(filteredRecs);
       setLoading(false);
       return;
     }
@@ -198,6 +199,7 @@ const CheckerImportReviewPage = () => {
         const map = data?.byImportId && typeof data.byImportId === 'object' ? data.byImportId : {};
         const key = Object.keys(map).find((k) => k === importId || String(k) === String(importId));
         const list = key != null ? map[key] : [];
+        console.log('Fetched maker decisions for importId', importId, list);
         setRecords(filterRowsForImport(list));
       } catch (e) {
         if (!cancelled) {
@@ -290,7 +292,7 @@ const CheckerImportReviewPage = () => {
     // If Register is explicitly "No" / "no" / "false" / 0, always Reject; otherwise Ok
     const registerVal = String(record?.register ?? record?.Register ?? '').trim().toLowerCase();
     const isNotRegistered = registerVal === 'no' || registerVal === 'false' || registerVal === '0';
-    const decisionStatus = isNotRegistered ? 'Reject' : (action === 'approve' ? 'Ok' : 'Reject');
+    const decisionStatus = isNotRegistered ? record.decisionStatus : (action === 'approve' ? 'Ok' : 'Rejected');
     const item = { decisionStatus, reason: DEFAULT_SUBMIT_REASON };
     const rawVolunteerId = record.id ?? record.Id;
     const dcid = record.decisionId ?? record.decision_id;
@@ -328,11 +330,19 @@ const CheckerImportReviewPage = () => {
   };
 
   // Check if records are already verified by checker
-  const isAlreadyVerified = records.some((r) => {
-    const reason = String(r?.reason ?? '').trim().toLowerCase();
+  const isAlreadyVerified = records.every((r) => {
+    console.log('🔍 Record:', r);
+    const rawReason = r?.reason ?? r?.Reason;
+    const reason = String(rawReason ?? '').trim().toLowerCase();
     const checkerId = r?.checkerId ?? r?.checker_id;
-    return reason === 'verified by checker';
+    const decisionStatus = String(r?.decisionStatus ?? r?.decision_status ?? r?.decision ?? '').trim().toLowerCase();
+    const hasValidStatus = decisionStatus === 'ok' || decisionStatus.includes('rejected');
+    const hasValidReason = reason.includes('verified by checker') || reason === 'printed' || rawReason == null;
+    
+    
+    return hasValidReason && hasValidStatus;
   });
+  
 
   const onSubmitActions = async () => {
     if (!canCheck) {
@@ -345,12 +355,16 @@ const CheckerImportReviewPage = () => {
       // Use per-row actions if set; otherwise approve all records
       // Always send all records; use pending action if set, otherwise default to 'approve'
       const decisions = records
-        .map((r) => {
-          const rid = getRecordId(r);
-          const action = (rid != null && pendingActions[String(rid)]) || 'approve';
-          return buildSubmitDecision(r, action);
-        })
-        .filter(Boolean);
+  .map((r) => {
+    const rid = getRecordId(r);
+    let action = (rid != null && pendingActions[String(rid)]);
+    if (!action) {
+      // Check if decision_status contains "rejected" (case-insensitive)
+      const decisionStatus = String(r?.decisionStatus ?? r?.decision_status ?? r?.decision ?? '').trim().toLowerCase();
+      action = decisionStatus.includes('rejected') ? 'reject' : 'approve';
+    }
+    return buildSubmitDecision(r, action);
+  }).filter(Boolean);
 
       const nImport = Number.parseInt(String(importId), 10);
       const importIdVal = Number.isNaN(nImport) ? importId : nImport;
@@ -373,6 +387,7 @@ const CheckerImportReviewPage = () => {
     } finally {
       setSubmittingActions(false);
     }
+    navigate('/checker/review');
   };
 
   if (loading) {
@@ -478,7 +493,7 @@ const CheckerImportReviewPage = () => {
                           (() => {
                             const pending = pendingActions[String(getRecordId(r))];
                             if (pending === 'approve') return 'Ok';
-                            if (pending === 'reject') return 'Reject';
+                            if (pending === 'reject') return 'Rejected';
                             return formatFieldValue(f, r);
                           })()
                         ) : (

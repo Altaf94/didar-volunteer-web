@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CustomInput from '../../components/CustomInput/CustomInput';
 import Alert from '../../components/Alert/Alert';
 import IsmailiLoader from '../../components/shared/IsmailiLoader';
+import volunteerApiService from '../../services/volunteerApi';
 import './ForgotPassword.css';
 
 const ForgotPassword = () => {
@@ -16,26 +17,9 @@ const ForgotPassword = () => {
     message: '',
   });
 
-  const API_BASE_URL =
-    process.env.REACT_APP_API_URL ||
-    process.env.REACT_APP_API_BASE_URL ||
-    'http://127.0.0.1:8001';
-
-  const FULL_API_URL = `${API_BASE_URL}/api/volunteers/auth/forgot-password`;
-
   const isValidEmail = (value) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(value);
-  };
-
-  const getErrorMessage = (data, fallback) => {
-    return (
-      data?.detail?.message ||
-      data?.detail?.error ||
-      data?.detail ||
-      data?.message ||
-      fallback
-    );
   };
 
   const handleSubmit = async (e) => {
@@ -70,33 +54,7 @@ const ForgotPassword = () => {
     setLoading(true);
 
     try {
-      const response = await fetch(FULL_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          email: cleanEmail,
-        }),
-      });
-
-      let data = {};
-
-      try {
-        data = await response.json();
-      } catch (error) {
-        data = {};
-      }
-
-      if (!response.ok) {
-        setAlert({
-          isVisible: true,
-          type: 'error',
-          message: getErrorMessage(data, `Request failed with status ${response.status}`),
-        });
-        return;
-      }
+      const data = await volunteerApiService.forgotPassword(cleanEmail);
 
       setAlert({
         isVisible: true,
@@ -111,7 +69,7 @@ const ForgotPassword = () => {
       setAlert({
         isVisible: true,
         type: 'error',
-        message: 'Network error. Please check your server connection.',
+        message: error?.message || 'Network error. Please check your server connection.',
       });
     } finally {
       setLoading(false);
