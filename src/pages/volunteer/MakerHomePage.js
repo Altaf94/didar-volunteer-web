@@ -35,9 +35,30 @@ const MakerHomePage = () => {
   } = useVolunteer();
 
   const [importGroups, setImportGroups] = useState({});
+  const [importStatusMap, setImportStatusMap] = useState({});
 
   const { logout } = useAuth();
   const { canView, canMake } = usePermissions();
+
+  const loadImportStatuses = useCallback(async (importIds) => {
+    try {
+      const statusPromises = importIds.map(async (importId) => {
+        try {
+          const status = await volunteerApiService.getImportStatus(importId);
+          return [importId, status.submitted];
+        } catch (err) {
+          console.error(`Failed to get status for import ${importId}:`, err);
+          return [importId, false];
+        }
+      });
+
+      const statusResults = await Promise.all(statusPromises);
+      const statusMap = Object.fromEntries(statusResults);
+      setImportStatusMap(statusMap);
+    } catch (err) {
+      console.error('Failed to load import statuses', err);
+    }
+  }, []);
 
   const loadByImportOrUser = useCallback(async () => {
     try {
@@ -65,10 +86,13 @@ const MakerHomePage = () => {
         groups[key].push(r);
       });
       setImportGroups(groups);
+
+      // Fetch status for each import ID
+      await loadImportStatuses(Object.keys(groups));
     } catch (err) {
       console.error('Failed to load by import or user', err);
     }
-  }, []);
+  }, [loadImportStatuses]);
 
   const loadData = useCallback(async () => {
     await Promise.all([
@@ -100,28 +124,19 @@ const MakerHomePage = () => {
     }
   })();
 
-  // Pending = batch has at least one record with recordStatus "maker" AND was NOT locally approved
+  // Pending = import NOT submitted to checker (based on API status)
   const pendingCount = Object.entries(importGroups).filter(([importId, recs]) =>
-    !approvedBatchIds.has(String(importId)) &&
-    recs.some((r) => (r.recordStatus || r.record_status || '').toLowerCase() === 'maker')
+    recs.length > 0 && !importStatusMap[importId]
   ).length;
 
-  // Submitted = batch was locally approved OR all records have moved past "maker"
+  // Submitted = import exists in maker_decisions table (based on API status)
   const submittedCount = Object.entries(importGroups).filter(([importId, recs]) =>
-    recs.length > 0 &&
-    (
-      approvedBatchIds.has(String(importId)) ||
-      recs.every((r) => (r.recordStatus || r.record_status || '').toLowerCase() !== 'maker')
-    )
+    recs.length > 0 && importStatusMap[importId]
   ).length;
 
   const firstPendingImportId = (() => {
     for (const [importId, recs] of Object.entries(importGroups)) {
-      if (
-        Array.isArray(recs) &&
-        !approvedBatchIds.has(String(importId)) &&
-        recs.some((r) => (r.recordStatus || r.record_status || '').toLowerCase() === 'maker')
-      ) {
+      if (Array.isArray(recs) && recs.length > 0 && !importStatusMap[importId]) {
         return String(importId);
       }
     }
@@ -232,9 +247,7 @@ const MakerHomePage = () => {
                     {Object.entries(importGroups).map(([importId, records]) => {
                       const total = records.length;
                       const fileName = '';
-                      const isSubmitted =
-                        approvedBatchIds.has(String(importId)) ||
-                        records.every((r) => (r.recordStatus || r.record_status || '').toLowerCase() !== 'maker');
+                      const isSubmitted = importStatusMap[importId] || false;
 
                       return (
                         <div key={importId} className="import-summary-card">

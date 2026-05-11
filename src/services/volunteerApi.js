@@ -170,6 +170,13 @@ class VolunteerApiService {
     });
   }
 
+  /** Check whether an import ID exists in maker_decisions table. */
+  async getImportStatus(importId) {
+    return this.makeRequest(`/api/volunteers/import-status?importId=${encodeURIComponent(importId)}`, {
+      method: 'GET',
+    });
+  }
+
   async submitVolunteers(volunteerIds) {
     return this.makeRequest('/api/volunteers/submit', {
       method: 'POST',
