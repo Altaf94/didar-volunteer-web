@@ -152,10 +152,7 @@ const Header = ({
                   </div>
                 </div>
                 <div className="header-dropdown-divider" />
-                <button className="header-dropdown-item" onClick={onChangePassword}>
-                  <Key size={16} />
-                  <span>Change Password</span>
-                </button>
+                
                 <button className="header-dropdown-item header-dropdown-logout" onClick={handleLogout}>
                   <LogOut size={16} />
                   <span>Logout</span>
