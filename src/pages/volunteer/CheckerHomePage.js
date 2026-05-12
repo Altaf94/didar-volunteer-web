@@ -114,8 +114,9 @@ const CheckerHomePage = () => {
     if (!Array.isArray(recs) || recs.length === 0) return false;
     const noPending = recs.every((r) => {
       const s = String(r?.decisionStatus ?? r?.decision_status ?? r?.decision ?? '').trim().toLowerCase();
-      return !PENDING_STATUSES.includes(s) || !s.includes('rejected');
+      return !PENDING_STATUSES.includes(s) && !s.includes('rejected');
     });
+
     const checkerActed = recs.some((r) => r?.checkerId != null && r?.checkerId !== '');
     const notPrinted = recs.some((r) => {
       const reason = String(r?.reason ?? '').trim().toLowerCase();
