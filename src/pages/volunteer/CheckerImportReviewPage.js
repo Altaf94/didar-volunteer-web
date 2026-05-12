@@ -194,7 +194,8 @@ const CheckerImportReviewPage = () => {
       setLoading(true);
       setLoadError(null);
       try {
-        const data = await volunteerApiService.getMakerDecisions();
+        const userId = tokenService.getUserId();
+        const data = await volunteerApiService.getMakerDecisions(userId);
         if (cancelled) return;
         const map = data?.byImportId && typeof data.byImportId === 'object' ? data.byImportId : {};
         const key = Object.keys(map).find((k) => k === importId || String(k) === String(importId));
@@ -380,6 +381,14 @@ const CheckerImportReviewPage = () => {
         })(),
         decisions,
       });
+
+      // Update remaining counts in event-access-level-duty requirements
+      try {
+        await volunteerApiService.updateRemainingCounts();
+      } catch (e) {
+        console.warn('Failed to update remaining counts:', e);
+      }
+
       setPendingActions({});
       setSubmitted(true);
     } catch (e) {

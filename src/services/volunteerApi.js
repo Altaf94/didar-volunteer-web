@@ -130,8 +130,9 @@ class VolunteerApiService {
   }
 
   /** GET list grouped by import (checker role). */
-  async getMakerDecisions() {
-    return this.makeRequest('/api/volunteers/maker-decisions', { method: 'GET' });
+  async getMakerDecisions(userId) {
+    const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+    return this.makeRequest(`/api/volunteers/maker-decisions${query}`, { method: 'GET' });
   }
 
   /** GET approved maker decisions ready for printing. */
@@ -174,6 +175,13 @@ class VolunteerApiService {
   async getImportStatus(importId) {
     return this.makeRequest(`/api/volunteers/import-status?importId=${encodeURIComponent(importId)}`, {
       method: 'GET',
+    });
+  }
+
+  /** Update remaining counts in event_access_level_duty_requirements based on approved maker_decisions. */
+  async updateRemainingCounts() {
+    return this.makeRequest('/api/volunteers/event-access-level-duty-requirements/update-remaining', {
+      method: 'POST',
     });
   }
 

@@ -225,6 +225,13 @@ const MakerReviewPage = () => {
       // Call API to submit maker decisions
       await volunteerApiService.submitMakerDecisions(approvalData);
 
+      // Update remaining counts in event-access-level-duty requirements
+      try {
+        await volunteerApiService.updateRemainingCounts();
+      } catch (e) {
+        console.warn('Failed to update remaining counts:', e);
+      }
+
       // Persist approved batch/ids locally so returning users don't re-send
       try {
         const approvedBatches = JSON.parse(localStorage.getItem('makerApproved_batches') || '[]');

@@ -13,10 +13,53 @@ import { parseExcelFile, validateExcelFormat, convertExcelToVolunteerData } from
 import './FileUpload.css';
 
 /**
+ * Region ID to Event ID Mapping
+ * Maps region_id to corresponding event_id(s) based on database structure
+ * Some regions have multiple events (arrays), others have a single event
+ */
+const REGION_TO_EVENT_MAP = {
+  1: 1,        // Gilgit → Gilgit (event id: 1)
+  2: 4,        // Hunza → Hunza (event id: 4)
+  3: [2, 3],   // Gupis → Gupis-1 (id: 2), Gupis-2 (id: 3)
+  4: [5, 6],   // Ishkoman → Ishkoman-1 (id: 5), Ishkoman-2 (id: 6)
+  5: 7,        // Lower Chitral → Lower Chitral (event id: 7)
+  6: [8, 9],   // Upper Chitral → Upper Chitral-1 (id: 8), Upper Chitral-2 (id: 9)
+};
+
+/**
+ * Event ID to Name mapping (from database)
+ */
+const EVENT_ID_TO_NAME = {
+  1: 'Gilgit',
+  2: 'Gupis - 1',
+  3: 'Gupis - 2',
+  4: 'Hunza',
+  5: 'Ishkoman - 1',
+  6: 'Ishkoman - 2',
+  7: 'Lower Chitral',
+  8: 'Upper Chitral - 1',
+  9: 'Upper Chitral - 2',
+};
+
+/** Returns array of allowed event IDs for a given region */
+function getAllowedEventIdsForRegion(regionId) {
+  const mapped = REGION_TO_EVENT_MAP[regionId];
+  if (!mapped) return [];
+  return Array.isArray(mapped) ? mapped : [mapped];
+}
+
+/** Normalize event string for comparison (lowercase, collapse spaces/dashes) */
+function normalizeEventStr(s) {
+  return (s || '').toString().toLowerCase().replace(/[\s-]+/g, '').trim();
+}
+
+/**
  * From POST /api/checkcnic: builds the set of CNICs (digits only) that are *not* registered.
  * Response: { results: [ { cnic, found } ], requestId } —
  * found: true => Registered: "Yes", found: false => Registered: "No".
  */
+
+
 function buildNotFoundCnicsSet(cnicResult, cnicsToCheck) {
   if (Array.isArray(cnicResult?.results)) {
     if (cnicResult.results.length === 0) {
@@ -111,7 +154,7 @@ const FileUpload = ({
         let localEventsSamePassed = true;
         let capacityErrors = [];
         // list of validation steps
-        const checks = ['FORMAT', 'ROW_COUNT', 'CNIC_FORMAT', 'EVENTS_SAME', 'EVENT_CAPACITY'];
+        const checks = ['FORMAT', 'ROW_COUNT', 'CNIC_FORMAT', 'EVENTS_SAME', 'EVENT_REGION_MATCH', 'EVENT_CAPACITY'];
         const errors = [];
 
         checks.forEach((check) => {
@@ -165,6 +208,54 @@ const FileUpload = ({
                     localEventsSamePassed = false;
                   } else {
                     localEventsSamePassed = true;
+                  }
+                }
+              } catch (e) {
+                // ignore
+              }
+              break;
+            }
+            case 'EVENT_REGION_MATCH': {
+              // Only enforce for regional-scope users
+              if (userScope !== 'regional') break;
+              try {
+                const userRegionId = tokenService.getUserRegionId();
+                if (!userRegionId) break;
+                const allowedEventIds = getAllowedEventIdsForRegion(Number(userRegionId));
+                if (allowedEventIds.length === 0) break;
+
+                const allowedNames = allowedEventIds.map(id => normalizeEventStr(EVENT_ID_TO_NAME[id]));
+
+                const headers = (data[0] || []).map(h => h?.toString().toLowerCase());
+                const eventHeaderIndex = headers.findIndex(h => h && (
+                  h.includes('event') || h.includes('event_name') || h.includes('eventname') ||
+                  h.includes('event number') || h.includes('event_number') || h.includes('eventno')
+                ));
+
+                if (eventHeaderIndex >= 0) {
+                  const rows = data.slice(1);
+                  const invalidEvents = new Set();
+                  rows.forEach((r) => {
+                    const val = (r[eventHeaderIndex] || '').toString().trim();
+                    if (!val) return;
+                    const num = parseInt(val, 10);
+                    if (!isNaN(num) && String(num) === val) {
+                      // Value is an event number/ID
+                      if (!allowedEventIds.includes(num)) {
+                        invalidEvents.add(val);
+                      }
+                    } else {
+                      // Value is an event name — normalize and compare
+                      const normalized = normalizeEventStr(val);
+                      if (!allowedNames.includes(normalized)) {
+                        invalidEvents.add(val);
+                      }
+                    }
+                  });
+
+                  if (invalidEvents.size > 0) {
+                    const allowedLabels = allowedEventIds.map(id => EVENT_ID_TO_NAME[id] || id).join(', ');
+                    errors.push(`Event(s) "${[...invalidEvents].join(', ')}" do not belong to your region. Allowed: ${allowedLabels}`);
                   }
                 }
               } catch (e) {

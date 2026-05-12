@@ -184,6 +184,22 @@ class TokenService {
     return payload.region_id || null;
   }
 
+  getUserId() {
+    const token = this.getAccessToken();
+
+    if (!token) {
+      return null;
+    }
+
+    const payload = this.decodeTokenPayload(token);
+
+    if (!payload) {
+      return null;
+    }
+
+    return payload.id || payload.user_id || payload.sub || null;
+  }
+
   getUserPermissions() {
     const token = this.getAccessToken();
 

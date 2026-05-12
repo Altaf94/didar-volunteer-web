@@ -21,10 +21,11 @@ import { usePermissions } from '../../hooks/usePermissions';
 import { VolunteerStatus, UserLevel } from '../../types/volunteer';
 import { getRegionLabel } from '../../constants/volunteerConstants';
 import volunteerApiService from '../../services/volunteerApi';
+import { tokenService } from '../../services/tokenService';
 import './CheckerHomePage.css';
 
 /** Numeric roles that have checker access (2 = checker, 3 = checker+maker). */
-const CHECKER_ROLES = [2, 3];
+const CHECKER_ROLES = [3,6];
 
 const CheckerHomePage = () => {
   const navigate = useNavigate();
@@ -52,6 +53,7 @@ const CheckerHomePage = () => {
   } = useVolunteer();
 
   const { logout, userRole } = useAuth();
+  console.log('User Role:', userRole);
   const { canCheck } = usePermissions();
   console.log(canCheck, 'canCheck');
 
@@ -59,7 +61,8 @@ const CheckerHomePage = () => {
     setMakerDecisionsLoading(true);
     setMakerDecisionsError(null);
     try {
-      const data = await volunteerApiService.getMakerDecisions();
+      const userId = tokenService.getUserId();
+      const data = await volunteerApiService.getMakerDecisions(userId);
       setMakerDecisions(data);
     } catch (err) {
       console.error('Failed to load maker decisions:', err);
