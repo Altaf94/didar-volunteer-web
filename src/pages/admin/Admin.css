@@ -1,0 +1,563 @@
+.admin-page {
+    min-height: 100vh;
+    background-color: #F8FAFD;
+  }
+  
+  .admin-container {
+    padding: 24px;
+    max-width: 1180px;
+    margin: 0 auto;
+  }
+  
+  /* Header */
+  .admin-header {
+    background-color: #FFFFFF;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid #E5E7EB;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+  }
+  
+  .admin-header-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  
+  .admin-logo {
+    width: 58px;
+    height: 58px;
+    border-radius: 14px;
+    object-fit: contain;
+  }
+  
+  .admin-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111C2D;
+    margin: 0 0 6px 0;
+  }
+  
+  .admin-header p {
+    font-size: 14px;
+    color: #6B7280;
+    margin: 0;
+  }
+  
+  .admin-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .admin-refresh-btn,
+  .admin-lock-btn {
+    padding: 11px 18px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+  }
+  
+  .admin-refresh-btn {
+    background-color: #306F45;
+    color: #FFFFFF;
+  }
+  
+  .admin-refresh-btn:hover:not(:disabled) {
+    background-color: #1A4D2E;
+  }
+  
+  .admin-lock-btn {
+    background-color: #FFFFFF;
+    color: #374151;
+    border: 1px solid #E5E7EB;
+  }
+  
+  .admin-lock-btn:hover {
+    background-color: #F3F4F6;
+  }
+  
+  .admin-refresh-btn:disabled,
+  .admin-lock-btn:disabled {
+    background-color: #9CA3AF;
+    color: #FFFFFF;
+    cursor: not-allowed;
+  }
+  
+  /* Alerts */
+  .admin-alert {
+    border-radius: 10px;
+    padding: 13px 16px;
+    margin-bottom: 20px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .admin-alert.success {
+    background-color: #DCFCE7;
+    color: #166534;
+    border: 1px solid #BBF7D0;
+  }
+  
+  .admin-alert.error {
+    background-color: #FEE2E2;
+    color: #991B1B;
+    border: 1px solid #FECACA;
+  }
+  
+  /* Cards */
+  .admin-card {
+    background-color: #FFFFFF;
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid #E5E7EB;
+    margin-bottom: 24px;
+  }
+  
+  .admin-card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111C2D;
+    margin: 0 0 18px 0;
+  }
+  
+  /* Form */
+  .admin-form {
+    width: 100%;
+  }
+  
+  .admin-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  
+  .admin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+  
+  .admin-field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #111C2D;
+  }
+  
+  .admin-field input,
+  .admin-field select {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    color: #111C2D;
+    font-size: 14px;
+    padding: 0 12px;
+    outline: none;
+    transition: all 0.2s;
+    box-sizing: border-box;
+  }
+  
+  .admin-field input::placeholder {
+    color: #9CA3AF;
+  }
+  
+  .admin-field input:focus,
+  .admin-field select:focus {
+    border-color: #306F45;
+    box-shadow: 0 0 0 3px rgba(48, 111, 69, 0.12);
+  }
+  
+  .admin-checkbox {
+    margin-top: 18px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: #374151;
+    cursor: pointer;
+  }
+  
+  .admin-checkbox input {
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+  
+  .admin-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 22px;
+  }
+  
+  .admin-actions button {
+    padding: 12px 24px;
+    background-color: #306F45;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+  }
+  
+  .admin-actions button:hover:not(:disabled) {
+    background-color: #1A4D2E;
+  }
+  
+  .admin-actions button:disabled {
+    background-color: #9CA3AF;
+    cursor: not-allowed;
+  }
+  
+  .admin-actions button.secondary {
+    background-color: #FFFFFF;
+    color: #374151;
+    border: 1px solid #E5E7EB;
+  }
+  
+  .admin-actions button.secondary:hover:not(:disabled) {
+    background-color: #F3F4F6;
+  }
+  
+  /* Bulk Add */
+  .bulk-help {
+    font-size: 13px;
+    color: #6B7280;
+    line-height: 1.6;
+    margin: 0 0 14px 0;
+  }
+  
+  .bulk-help strong {
+    color: #111C2D;
+  }
+  
+  .bulk-textarea {
+    width: 100%;
+    min-height: 140px;
+    border: 1px solid #E5E7EB;
+    border-radius: 8px;
+    background-color: #FFFFFF;
+    color: #111C2D;
+    font-size: 13px;
+    padding: 12px;
+    outline: none;
+    resize: vertical;
+    line-height: 1.6;
+    box-sizing: border-box;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+  
+  .bulk-textarea:focus {
+    border-color: #306F45;
+    box-shadow: 0 0 0 3px rgba(48, 111, 69, 0.12);
+  }
+  
+  .bulk-result {
+    margin-top: 16px;
+    padding: 14px;
+    border-radius: 10px;
+    background-color: #F8FAFD;
+    border: 1px solid #E5E7EB;
+    font-size: 13px;
+    color: #374151;
+  }
+  
+  .bulk-result p {
+    margin: 0 0 10px 0;
+    font-weight: 600;
+    color: #111C2D;
+  }
+  
+  .bulk-result pre {
+    max-height: 180px;
+    overflow: auto;
+    background-color: #111C2D;
+    color: #D1FAE5;
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 12px;
+    white-space: pre-wrap;
+  }
+  
+  /* Table */
+  .admin-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .admin-table {
+    width: 100%;
+    min-width: 980px;
+    border-collapse: collapse;
+  }
+  
+  .admin-table th {
+    background-color: #F8FAFD;
+    color: #111C2D;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: left;
+    padding: 13px 12px;
+    border-bottom: 1px solid #E5E7EB;
+  }
+  
+  .admin-table td {
+    color: #374151;
+    font-size: 13px;
+    padding: 13px 12px;
+    border-bottom: 1px solid #E5E7EB;
+    vertical-align: middle;
+  }
+  
+  .admin-table tr:hover td {
+    background-color: #F9FAFB;
+  }
+  
+  .admin-empty {
+    text-align: center;
+    color: #6B7280;
+    padding: 32px !important;
+  }
+  
+  /* Badges */
+  .admin-badge {
+    min-width: 70px;
+    height: 26px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  
+  .admin-badge.active {
+    background-color: #DCFCE7;
+    color: #166534;
+  }
+  
+  .admin-badge.inactive {
+    background-color: #FEE2E2;
+    color: #991B1B;
+  }
+  
+  /* Row buttons */
+  .admin-row-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .admin-row-actions button.small {
+    padding: 8px 10px;
+    min-width: 76px;
+    border-radius: 8px;
+    border: none;
+    background-color: #306F45;
+    color: #FFFFFF;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  
+  .admin-row-actions button.small:hover {
+    background-color: #1A4D2E;
+  }
+  
+  .admin-row-actions button.edit {
+    background-color: #2563EB;
+  }
+  
+  .admin-row-actions button.edit:hover {
+    background-color: #1D4ED8;
+  }
+  
+  .admin-row-actions button.danger {
+    background-color: #EF4444;
+  }
+  
+  .admin-row-actions button.danger:hover {
+    background-color: #DC2626;
+  }
+  
+  /* PIN Page */
+  .admin-pin-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #F8FAFD 0%, #F4F9F6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  .admin-pin-card {
+    background-color: #FFFFFF;
+    border-radius: 16px;
+    padding: 40px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    text-align: center;
+  }
+  
+  .admin-pin-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+  
+  .admin-pin-logo img {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+    object-fit: contain;
+  }
+  
+  .admin-pin-card h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111C2D;
+    text-align: center;
+    margin: 0 0 8px 0;
+  }
+  
+  .admin-pin-card p {
+    font-size: 14px;
+    color: #6B7280;
+    text-align: center;
+    margin: 0 0 28px 0;
+  }
+  
+  .admin-pin-card form {
+    text-align: left;
+  }
+  
+  .admin-pin-btn {
+    width: 100%;
+    padding: 12px 24px;
+    background-color: #306F45;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-top: 18px;
+  }
+  
+  .admin-pin-btn:hover {
+    background-color: #1A4D2E;
+  }
+  
+  /* Modal */
+  .admin-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: rgba(17, 28, 45, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 999;
+  }
+  
+  .admin-modal {
+    background-color: #FFFFFF;
+    border-radius: 16px;
+    padding: 28px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 60px rgba(17, 28, 45, 0.25);
+  }
+  
+  .admin-modal h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111C2D;
+    margin: 0 0 10px 0;
+  }
+  
+  .admin-modal p {
+    font-size: 14px;
+    color: #6B7280;
+    margin: 0 0 20px 0;
+  }
+  
+  .admin-modal strong {
+    color: #111C2D;
+  }
+  
+  .admin-modal .admin-field {
+    margin-bottom: 14px;
+  }
+  
+  /* Responsive */
+  @media (max-width: 900px) {
+    .admin-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  
+    .admin-header {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  
+    .admin-header-actions {
+      width: 100%;
+    }
+  
+    .admin-refresh-btn,
+    .admin-lock-btn {
+      flex: 1;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .admin-container {
+      padding: 16px;
+    }
+  
+    .admin-card {
+      padding: 20px;
+    }
+  
+    .admin-grid {
+      grid-template-columns: 1fr;
+    }
+  
+    .admin-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  
+    .admin-actions button {
+      width: 100%;
+    }
+  
+    .admin-pin-card {
+      padding: 34px 24px;
+    }
+  
+    .admin-row-actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  
+    .admin-row-actions button.small {
+      width: 100%;
+    }
+  }

@@ -8,6 +8,7 @@ import LoadingProvider from './context/LoadingProvider';
 import LoginPage from './pages/auth/LoginPage';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import ResetPassword from './pages/auth/ResetPassword';
+import Admin from './pages/admin/Admin';
 
 import MakerHomePage from './pages/volunteer/MakerHomePage';
 import MakerReviewPage from './pages/volunteer/MakerReviewPage';
@@ -41,6 +42,8 @@ const ProtectedRoute = ({ children, allowedRoles, requirePermission }) => {
     } else if (userRole === 3 || userRole === 6) {
       return <Navigate to="/checker" replace />;
     }
+
+    return <Navigate to="/login" replace />;
   }
 
   if (requirePermission) {
@@ -113,6 +116,9 @@ function AppRoutes() {
           </PublicRoute>
         }
       />
+
+      {/* Admin Route - PIN based, no login required */}
+      <Route path="/admin" element={<Admin />} />
 
       {/* Maker Routes */}
       <Route
