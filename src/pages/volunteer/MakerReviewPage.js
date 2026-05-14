@@ -433,13 +433,13 @@ const MakerReviewPage = () => {
               </div>
 
               <div className="pagination-right">
-                {allApproved ? (
+                {allApproved || isSubmitted ? (
                   <div className="approved-message">✓ All records approved</div>
                 ) : (
                   <button
                     className="approve-btn"
-                    onClick={canMake ? handleApprove : undefined}
-                    disabled={!canMake || approving || !records.length}
+                    onClick={canMake  ? handleApprove : undefined}
+                    disabled={!canMake || approving ||  !records.length}
                     style={{ opacity: canMake ? 1 : 0.6 }}
                     title={
                       !canMake
@@ -448,7 +448,7 @@ const MakerReviewPage = () => {
                     }
                   >
                     <Check size={16} />
-                    {canMake && !isSubmitted
+                    {canMake 
                       ? approving
                         ? 'Submitting...'
                         : 'Submit To Checker'
