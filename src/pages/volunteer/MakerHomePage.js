@@ -267,7 +267,7 @@ const MakerHomePage = () => {
                               <button
                                 className="view-btn"
                                 onClick={() => {
-                                  navigate('/maker/review', { state: { batchId: importId } });
+                                  navigate('/maker/review', { state: { batchId: importId, isSubmitted } });
                                 }}
                                 style={{ opacity: 1, cursor: 'pointer' }}
                               >

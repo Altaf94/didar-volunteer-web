@@ -51,6 +51,7 @@ const MakerReviewPage = () => {
 
   const [records, setRecords] = useState([]);
   const [batchId, setBatchId] = useState(location?.state?.batchId ?? null);
+  const [isSubmitted, setIsSubmitted] = useState(Boolean(location?.state?.isSubmitted));
   const [viewMode] = useState('compact');
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
@@ -447,7 +448,7 @@ const MakerReviewPage = () => {
                     }
                   >
                     <Check size={16} />
-                    {canMake
+                    {canMake && !isSubmitted
                       ? approving
                         ? 'Submitting...'
                         : 'Submit To Checker'
