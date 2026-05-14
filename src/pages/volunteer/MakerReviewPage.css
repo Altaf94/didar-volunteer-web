@@ -193,7 +193,9 @@
 .head-cell,
 .cell {
   padding: 0 16px;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-wrap: break-word;
   font-size: 14px;
 }
 
