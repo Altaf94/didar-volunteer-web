@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header/Header';
 import IsmailiLoader from '../../components/shared/IsmailiLoader';
@@ -464,6 +464,32 @@ const CheckerImportReviewPage = () => {
     return hasValidReason && hasValidStatus;
   });
 
+  const allDiscrepantsResolved = useMemo(() => {
+    const discrepants = records.filter(isDiscrepant);
+
+    if (discrepants.length === 0) return true;
+
+    return discrepants.every((r) => {
+      const rid = getRecordId(r);
+
+      if (rid == null) return false;
+
+      const pending = pendingActions[String(rid)];
+
+      if (pending) return true;
+
+      const raw = r?.decisionStatus ?? r?.decision_status ?? r?.decision ?? '';
+      const s = String(raw ?? '').trim().toLowerCase();
+
+      return !(
+        s === 'discrepant(1)' ||
+        s === 'discrepant(2)' ||
+        s === 'discrepant-1' ||
+        s === 'discrepant-2'
+      );
+    });
+  }, [records, pendingActions]);
+
   const onSubmitActions = async () => {
     if (!canCheck) {
       alert('You do not have permission to submit checker decisions.');
@@ -736,7 +762,8 @@ const CheckerImportReviewPage = () => {
                 records.length === 0 ||
                 submittingActions ||
                 submitted ||
-                isAlreadyVerified
+                isAlreadyVerified ||
+                !allDiscrepantsResolved
               }
               style={{ opacity: canCheck ? 1 : 0.6 }}
               title={
@@ -744,7 +771,9 @@ const CheckerImportReviewPage = () => {
                   ? 'You do not have permission to submit decisions'
                   : isAlreadyVerified
                     ? 'Already verified by checker'
-                    : ''
+                    : !allDiscrepantsResolved
+                      ? 'Resolve all discrepant records before submitting'
+                      : ''
               }
             >
               {submittingActions
