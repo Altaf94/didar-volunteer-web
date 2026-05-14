@@ -176,7 +176,14 @@
 }
 
 .table-row {
+  display: grid;
+  grid-auto-flow: column;
   grid-auto-columns: minmax(80px, 1fr);
+  gap: 0;
+  padding: 13px 12px;
+  border-top: 1px solid #F3F4F6;
+  align-items: center;
+  transition: background 0.2s ease;
 }
 
 .table-row:hover {
