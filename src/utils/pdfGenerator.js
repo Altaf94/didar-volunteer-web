@@ -20,7 +20,13 @@ function readData(data) {
   }
 
   for (const row of data) {
-    stickers.push(REQUIRED_FIELDS.map((field) => (row[field] || "").trim()));
+    const sticker = REQUIRED_FIELDS.map((field) => (row[field] || "").trim());
+
+    if (sticker[3].length !== 13) {
+      sticker[3] = "";
+    }
+
+    stickers.push(sticker);
   }
 
   return stickers;

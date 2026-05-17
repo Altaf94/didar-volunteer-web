@@ -113,6 +113,7 @@ export const EVENTS = [
   { id: '9', name: "Upper Chitral Day 2" },
   { id: '2', name: "Gupis Yasin Day 1" },
   { id: '3', name: "Gupis Yasin Day 2" },
+  {id:'10',name:"All Events"}
 ];
 
 export const getEventById = (id) => {
