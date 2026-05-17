@@ -70,7 +70,7 @@ const CheckerPrintPage = () => {
       console.log('Formatting data for PDF generation:', records);
       const data = records.map(record => ({
         field1: formatEventName(record.eventName),
-        field2: record.reason?.includes('Direct Ok by National Admin') ? records.name : record.dutyTypeName || '',
+        field2: record.reason?.includes('Direct Ok by National Admin') ? record.name : record.dutyTypeName || '',
         field3: record.reason?.includes('Direct Ok by National Admin') ? record.dutyTypeName : record.name || '',
         field4: record.cnic || record.CNIC || '',
         field5: record.accessLevelName || ''
