@@ -10,6 +10,7 @@ import {
   Printer,
   Package,
   Clock,
+  PlusCircle,
 } from 'lucide-react';
 import Header from '../../components/Header/Header';
 import IsmailiLoader from '../../components/shared/IsmailiLoader';
@@ -26,6 +27,9 @@ import './CheckerHomePage.css';
 
 /** Numeric roles that have checker access (2 = checker, 3 = checker+maker). */
 const CHECKER_ROLES = [3,6];
+
+const isNationalAdminScope = () =>
+  String(tokenService.getUserScope() || '').trim().toLowerCase() === 'national admin';
 
 const CheckerHomePage = () => {
   const navigate = useNavigate();
@@ -56,6 +60,7 @@ const CheckerHomePage = () => {
   console.log('User Role:', userRole);
   const { canCheck } = usePermissions();
   console.log(canCheck, 'canCheck');
+  const showNationalAdminCreate = isNationalAdminScope();
 
   const loadMakerDecisions = useCallback(async () => {
     setMakerDecisionsLoading(true);
@@ -125,7 +130,7 @@ const CheckerHomePage = () => {
     return noPending && checkerActed && notPrinted;
   }).length;
 
-  const isNationalLevel = userLevel === UserLevel.NATIONAL;
+  const isNationalLevel = userLevel === UserLevel.NATIONAL || userLevel === UserLevel.NATIONAL_ADMIN;
 
   const handleLogout = () => {
     logout();
@@ -235,6 +240,22 @@ const CheckerHomePage = () => {
               <h3 className="action-title">Print Badges</h3>
               <p className="action-subtitle">{canCheck ? `${readyToPrintCount} ready` : ''}</p>
             </div>
+
+            {showNationalAdminCreate && (
+              <div
+                className={`action-card national-admin-card ${!canCheck ? 'disabled' : ''}`}
+                onClick={
+                  canCheck
+                    ? () => navigate('/checker/national-admin-create')
+                    : () => alert('You do not have permission to create print records.')
+                }
+                style={{ opacity: canCheck ? 1 : 0.5, cursor: canCheck ? 'pointer' : 'not-allowed' }}
+              >
+                <PlusCircle size={32} color={colors.white} />
+                <h3 className="action-title">Create Print Records</h3>
+                <p className="action-subtitle">National Admin</p>
+              </div>
+            )}
           </div>
         </section>
 

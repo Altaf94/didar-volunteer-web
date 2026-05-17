@@ -20,6 +20,7 @@ export const UserLevel = {
   NATIONAL: 'national',
   REGIONAL: 'regional',
   LOCAL: 'local',
+  NATIONAL_ADMIN: 'national admin',
 };
 
 export const UserRole = {

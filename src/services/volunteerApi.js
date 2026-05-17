@@ -67,7 +67,7 @@ class VolunteerApiService {
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `HTTP ${response.status}`);
+        throw new Error(errorData.message || errorData.detail?.message || `HTTP ${response.status}`);
       }
 
       return await response.json();
@@ -138,6 +138,14 @@ class VolunteerApiService {
   /** GET approved maker decisions ready for printing. */
   async getMakerDecisionsOk() {
     return this.makeRequest('/api/volunteers/maker-decisions-ok', { method: 'GET' });
+  }
+
+  /** Directly insert maker decisions with decision_status='Ok'. */
+  async insertOkMakerDecisions(records) {
+    return this.makeRequest('/api/volunteers/maker-decisions/ok', {
+      method: 'POST',
+      body: JSON.stringify(records),
+    });
   }
 
   /** Checker submits approve/reject for an import. */

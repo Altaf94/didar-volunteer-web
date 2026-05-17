@@ -457,9 +457,8 @@ const CheckerImportReviewPage = () => {
       decisionStatus === 'ok' || decisionStatus.includes('rejected');
 
     const hasValidReason =
-      reason.includes('verified by checker') ||
-      reason === 'printed' ||
-      rawReason == null;
+      reason.includes('verified by checker') || reason.includes ('direct ok by national admin') ||
+      reason === 'printed' ||    rawReason == null;
 
     return hasValidReason && hasValidStatus;
   });

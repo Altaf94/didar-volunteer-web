@@ -1,0 +1,229 @@
+.national-admin-create-page {
+  min-height: 100vh;
+  background-color: #F8FAFD;
+}
+
+.national-admin-create-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 28px 20px;
+}
+
+.national-admin-top-actions {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.national-admin-back-btn,
+.national-admin-add-btn,
+.national-admin-submit-btn,
+.national-admin-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 9px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.national-admin-back-btn {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid #E5E7EB;
+  background-color: #FFFFFF;
+  color: #306F45;
+  box-shadow: 0 4px 12px rgba(17, 28, 45, 0.06);
+}
+
+.national-admin-back-btn:hover {
+  background-color: #F4F9F6;
+  border-color: #306F45;
+}
+
+.national-admin-form {
+  background: #FFFFFF;
+  border: 1px solid #E8EEF3;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.06);
+  overflow: hidden;
+}
+
+.national-admin-form-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 20px;
+  border-bottom: 1px solid #E5E7EB;
+  background: #FBFDFF;
+}
+
+.national-admin-form-header h2 {
+  color: #111827;
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0;
+}
+
+.national-admin-add-btn,
+.national-admin-submit-btn {
+  min-height: 40px;
+  padding: 10px 16px;
+  border: none;
+  background: #306F45;
+  color: #FFFFFF;
+  box-shadow: 0 4px 12px rgba(48, 111, 69, 0.22);
+}
+
+.national-admin-add-btn:hover,
+.national-admin-submit-btn:hover {
+  background: #1A4D2E;
+  transform: translateY(-1px);
+}
+
+.national-admin-add-btn:disabled,
+.national-admin-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.national-admin-table {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.national-admin-table-head,
+.national-admin-table-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) minmax(160px, 1.15fr) minmax(210px, 1.25fr) minmax(180px, 1.15fr) minmax(180px, 1.05fr) 56px;
+  min-width: 1050px;
+  align-items: start;
+}
+
+.national-admin-table-head {
+  padding: 13px 12px;
+  background: #F8FAFB;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 800;
+  border-bottom: 1px solid #E5E7EB;
+}
+
+.national-admin-table-row {
+  padding: 12px;
+  border-bottom: 1px solid #F3F4F6;
+}
+
+.national-admin-table-row:last-child {
+  border-bottom: none;
+}
+
+.national-admin-table-head > div,
+.national-admin-table-row > div {
+  padding: 0 8px;
+}
+
+.national-admin-table input,
+.national-admin-table select {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #E6EEF6;
+  border-radius: 9px;
+  background: #FFFFFF;
+  color: #111827;
+  font-size: 14px;
+  padding: 0 12px;
+  outline: none;
+}
+
+.national-admin-table input:focus,
+.national-admin-table select:focus {
+  border-color: #306F45;
+  box-shadow: 0 0 0 3px rgba(48, 111, 69, 0.12);
+}
+
+.national-admin-table .field-error {
+  border-color: #DC2626;
+}
+
+.national-admin-field-error,
+.national-admin-error-message {
+  color: #B91C1C;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.national-admin-field-error {
+  display: block;
+  margin-top: 5px;
+}
+
+.national-admin-error-message {
+  margin: 14px 20px 0;
+}
+
+.national-admin-row-actions {
+  display: flex;
+  justify-content: center;
+}
+
+.national-admin-icon-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #FCA5A5;
+  background: #FFFFFF;
+  color: #B91C1C;
+}
+
+.national-admin-icon-btn:hover:not(:disabled) {
+  background: #FEF2F2;
+}
+
+.national-admin-icon-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.national-admin-submit-row {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 20px;
+  border-top: 1px solid #F1F5F9;
+  background: #FBFDFF;
+}
+
+.national-admin-empty-state {
+  background: #FFFFFF;
+  border: 1px solid #FCA5A5;
+  border-radius: 12px;
+  color: #B91C1C;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 18px;
+  margin-top: 18px;
+}
+
+@media (max-width: 768px) {
+  .national-admin-create-content {
+    padding: 20px 14px;
+  }
+
+  .national-admin-back-btn,
+  .national-admin-submit-btn,
+  .national-admin-add-btn {
+    width: 100%;
+  }
+
+  .national-admin-form-header,
+  .national-admin-submit-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

@@ -14,6 +14,7 @@ import MakerHomePage from './pages/volunteer/MakerHomePage';
 import MakerReviewPage from './pages/volunteer/MakerReviewPage';
 import CheckerHomePage from './pages/volunteer/CheckerHomePage';
 import CheckerImportReviewPage from './pages/volunteer/CheckerImportReviewPage';
+import CheckerNationalAdminCreatePage from './pages/volunteer/CheckerNationalAdminCreatePage';
 import CheckerPrintPage from './pages/volunteer/CheckerPrintPage';
 import VolunteerUploadPage from './pages/volunteer/VolunteerUploadPage';
 
@@ -172,6 +173,15 @@ function AppRoutes() {
         element={
           <ProtectedRoute allowedRoles={[3, 6]} requirePermission="check">
             <CheckerPrintPage />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/checker/national-admin-create"
+        element={
+          <ProtectedRoute allowedRoles={[3, 6]} requirePermission="check">
+            <CheckerNationalAdminCreatePage />
           </ProtectedRoute>
         }
       />

@@ -69,22 +69,23 @@ function drawSticker(pdf, pageWidth, pageHeight, lines) {
   for (let i = 0; i < lines.length; i++) {
     // Each line at a different x position (left to right)
     // Add extra gap before field5 (index 4) for line break
+    const isLast = i === lines.length - 1;
     let posX = startX + i * lineGapMM;
-    if (i >= 4) {
-      posX += lineGapMM * 0.6; // extra spacing as line break before field5
+    if (isLast) {
+      posX += lineGapMM * 0.6; // extra spacing before the final (small/italic) field
     }
 
-    // field5 (index 4): smaller, normal italic font
-    if (i === 4) {
+    // Last field: smaller, italic font. Others remain bold.
+    if (isLast) {
       pdf.setFont("Helvetica", "italic");
-      pdf.setFontSize(fontSize - 2);
+      pdf.setFontSize(fontSize - 4);
     } else {
       pdf.setFont("Helvetica", "bold");
       pdf.setFontSize(fontSize);
     }
 
     // Calculate text width in mm for vertical centering
-    const currentSize = i === 4 ? fontSize - 2 : fontSize;
+    const currentSize = isLast ? fontSize - 2 : fontSize;
     const textWidthMM =
       (pdf.getStringUnitWidth(lines[i]) * currentSize * 25.4) / 72;
 
@@ -130,7 +131,43 @@ export function generatePdf(data, outputFilename) {
     if (i > 0) {
       pdf.addPage([pageWidth, pageHeight]);
     }
-    drawSticker(pdf, pageWidth, pageHeight, stickers[i]);
+    // Prepare lines for this sticker. If field2 (index 1) is long, split into two lines.
+    const rawLines = stickers[i].slice();
+
+    if (rawLines[1] && typeof rawLines[1] === 'string') {
+      const field2 = rawLines[1].trim();
+
+      // Simple heuristic: split into two lines if longer than 18 chars and contains spaces
+      if (field2.length > 18 && field2.includes(' ')) {
+        const words = field2.split(/\s+/);
+        if (words.length > 1) {
+          const totalChars = field2.length;
+          let first = '';
+          let second = '';
+
+          for (let w of words) {
+            if ((first + ' ' + w).trim().length <= Math.ceil(totalChars / 2) || first === '') {
+              first = (first + ' ' + w).trim();
+            } else {
+              second = (second + ' ' + w).trim();
+            }
+          }
+
+          // Fallback: if second ended empty, split by half of string
+          if (!second) {
+            const mid = Math.floor(field2.length / 2);
+            const splitAt = Math.max(field2.lastIndexOf(' ', mid), mid);
+            first = field2.slice(0, splitAt).trim();
+            second = field2.slice(splitAt).trim();
+          }
+
+          // Replace field2 with two lines (inserting at index 1)
+          rawLines.splice(1, 1, first, second);
+        }
+      }
+    }
+
+    drawSticker(pdf, pageWidth, pageHeight, rawLines);
   }
 
   pdf.save(outputFilename);

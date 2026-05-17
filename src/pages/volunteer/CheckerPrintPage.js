@@ -76,11 +76,11 @@ const CheckerPrintPage = () => {
       }));
 
       generatePdf(data, `stickers_import_${importId}.pdf`);
-      console.log('Formatted print data:', data);
       
       // Mark records as printed in the database
       await volunteerApiService.markMakerDecisionsPrinted(importId);
-      console.log('Successfully marked import as printed:', importId);
+      handleBack();
+      
       
       
     } catch (err) {
