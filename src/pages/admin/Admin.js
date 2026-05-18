@@ -460,10 +460,10 @@ const Admin = () => {
     const role = Number(roleId);
 
     if (role === 1) return 'Admin';
-    if (role === 2) return 'Maker';
-    if (role === 3) return 'Checker';
-    if (role === 5) return 'Maker';
-    if (role === 6) return 'Checker';
+    if (role === 2) return 'National Maker';
+    if (role === 3) return 'National Checker';
+    if (role === 5) return 'Regional Maker';
+    if (role === 6) return 'Regional Checker';
 
     return `Role ${roleId}`;
   };
@@ -562,7 +562,7 @@ const Admin = () => {
               <div className="admin-field">
                 <label>Password</label>
                 <input
-                  type="password"
+                  type="text"
                   placeholder="Initial password"
                   value={form.password}
                   onChange={(e) => handleChange('password', e.target.value)}
@@ -576,10 +576,10 @@ const Admin = () => {
                   onChange={(e) => handleChange('role_id', e.target.value)}
                 >
                   <option value="1">Admin</option>
-                  <option value="2">Maker</option>
-                  <option value="3">Checker</option>
-                  <option value="5">Maker</option>
-                  <option value="6">Checker</option>
+                  <option value="2">National Maker</option>
+                  <option value="3">National Checker</option>
+                  <option value="5">Regional Maker</option>
+                  <option value="6">Regional Checker</option>
                 </select>
               </div>
 
