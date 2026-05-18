@@ -376,7 +376,7 @@ const LoginPage = () => {
             onChange={setPassword}
           />
 
-          <div className="login-options">
+          {/* <div className="login-options">
             <label className="login-checkbox-label">
               <input
                 type="checkbox"
@@ -394,7 +394,7 @@ const LoginPage = () => {
             >
               Forgot Password?
             </button>
-          </div>
+          </div> */}
 
           <button
             type="submit"
