@@ -317,6 +317,7 @@ const FileUpload = ({
               const tokens = (s) => normalize(s).split(/\s+/).filter(Boolean);
 
               const findMatchingRequirement = (evPart) => {
+                
                 const evNorm = normalize(evPart);
                 if (!evNorm) return null;
 
@@ -338,8 +339,10 @@ const FileUpload = ({
                   return regionMatch && normalize(r.event).includes(regionMatch.label.toLowerCase());
                 });
                 if (found) return found;
-
+                  
                 return null;
+                
+                ;
               };
 
               for (const [k, fileCount] of Object.entries(counts)) {
@@ -399,7 +402,7 @@ const FileUpload = ({
 
                 if (fileCount > remaining) {
                   const existing = requiredCount - remaining;
-                  const msg = `Access: "${matchAccess.accessLevel}", Duty "${matchDuty.dutyType || matchDuty.duty}" already has "${existing}" volunteers so cannot process this file`;
+                  const msg = `Access: "${matchAccess.accessLevel}", Duty "${matchDuty.dutyType || matchDuty.duty}"  has "${remaining}" volunteers slots left but file uploaded has ${fileCount} so cannot process this file`;
                   errors.push(msg);
                   capacityErrors.push(msg);
                 }
