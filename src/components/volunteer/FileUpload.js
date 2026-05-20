@@ -402,7 +402,7 @@ const FileUpload = ({
 
                 if (fileCount > remaining) {
                   const existing = requiredCount - remaining;
-                  const msg = `Access: "${matchAccess.accessLevel}", Duty "${matchDuty.dutyType || matchDuty.duty}"  has "${remaining}" volunteers slots left but file uploaded has ${fileCount} so cannot process this file`;
+                  const msg = `Access: "${matchAccess.accessLevel}", Duty "${matchDuty.dutyType || matchDuty.duty}"  has "${remaining}" volunteers slots left but file uploaded has "${fileCount}" records so cannot process this file`;
                   errors.push(msg);
                   capacityErrors.push(msg);
                 }
