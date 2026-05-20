@@ -11,6 +11,8 @@ import {
   Package,
   Clock,
   PlusCircle,
+  Search,
+  ChevronDown,
 } from 'lucide-react';
 import Header from '../../components/Header/Header';
 import IsmailiLoader from '../../components/shared/IsmailiLoader';
@@ -37,12 +39,15 @@ const CheckerHomePage = () => {
   const [makerDecisions, setMakerDecisions] = useState(null);
   const [makerDecisionsLoading, setMakerDecisionsLoading] = useState(false);
   const [makerDecisionsError, setMakerDecisionsError] = useState(null);
+  const [importSearch, setImportSearch] = useState('');
   
   // State for print-ready data
   const [printReadyData, setPrintReadyData] = useState(null);
   const [printReadyLoading, setPrintReadyLoading] = useState(false);
   const [printReadyError, setPrintReadyError] = useState(null);
   const [showPrintReady, setShowPrintReady] = useState(false);
+  const [recentUploadsCollapsed, setRecentUploadsCollapsed] = useState(false);
+  const [readyToPrintCollapsed, setReadyToPrintCollapsed] = useState(false);
 
   const {
     volunteersLoading,
@@ -103,6 +108,46 @@ const CheckerHomePage = () => {
       ? Object.entries(makerDecisions.byImportId)
       : [];
 
+  const getImportSortValue = (importId) => {
+    const numericValue = Number(importId);
+    return Number.isFinite(numericValue) ? numericValue : null;
+  };
+
+  const sortedImportEntries = [...byImportEntries].sort(([a], [b]) => {
+    const aValue = getImportSortValue(a);
+    const bValue = getImportSortValue(b);
+
+    if (aValue !== null && bValue !== null) {
+      return bValue - aValue;
+    }
+
+    return String(b).localeCompare(String(a), undefined, {
+      numeric: true,
+      sensitivity: 'base',
+    });
+  });
+
+  const filteredImportEntries = sortedImportEntries.filter(([importId]) =>
+    String(importId).toLowerCase().includes(importSearch.trim().toLowerCase())
+  );
+
+  const sortedPrintReadyEntries =
+    printReadyData && typeof printReadyData === 'object'
+      ? Object.entries(printReadyData).sort(([a], [b]) => {
+          const aValue = getImportSortValue(a);
+          const bValue = getImportSortValue(b);
+
+          if (aValue !== null && bValue !== null) {
+            return bValue - aValue;
+          }
+
+          return String(b).localeCompare(String(a), undefined, {
+            numeric: true,
+            sensitivity: 'base',
+          });
+        })
+      : [];
+
   const PENDING_STATUSES = ['pending', 'discrepant', 'discrepant-1', 'discrepant-2', 'discrepant(1)', 'discrepant(2)'];
 
   // Pending Review = imports that still have at least one pending/discrepant record
@@ -119,15 +164,15 @@ const CheckerHomePage = () => {
     if (!Array.isArray(recs) || recs.length === 0) return false;
     const noPending = recs.every((r) => {
       const s = String(r?.decisionStatus ?? r?.decision_status ?? r?.decision ?? '').trim().toLowerCase();
-      return !PENDING_STATUSES.includes(s) && !s.includes('rejected');
+      return !PENDING_STATUSES.includes(s) && (s.includes('rejected') || s.includes('ok')); ;
     });
 
     const checkerActed = recs.some((r) => r?.checkerId != null && r?.checkerId !== '');
-    const notPrinted = recs.some((r) => {
+    const notPrinted = recs.every((r) => {
       const reason = String(r?.reason ?? '').trim().toLowerCase();
       return reason !== 'printed';
     });
-    return noPending && checkerActed && notPrinted;
+    return noPending && notPrinted;
   }).length;
 
   const isNationalLevel = userLevel === UserLevel.NATIONAL || userLevel === UserLevel.NATIONAL_ADMIN;
@@ -146,10 +191,13 @@ const CheckerHomePage = () => {
     setPrintReadyLoading(true);
     setPrintReadyError(null);
     setShowPrintReady(true);
+    setRecentUploadsCollapsed(true);
+    setReadyToPrintCollapsed(false);
     
     try {
       console.log('Fetching maker decisions ready for printing...');
-      const data = await volunteerApiService.getMakerDecisionsOk();
+      const userId = tokenService.getUserId();
+      const data = await volunteerApiService.getMakerDecisionsOk(userId);
       console.log('Maker decisions OK:', data);
       setPrintReadyData(data);
     } catch (err) {
@@ -264,36 +312,71 @@ const CheckerHomePage = () => {
           <section className="section recent-uploads-section">
             <div className="section-header">
               <h2 className="section-title">Recent Uploads</h2>
-              {byImportEntries.length > 0 && (
+              <div className="section-header-actions">
+                {false  && (
+                  <button
+                    type="button"
+                    className="view-all-btn"
+                    onClick={() => {
+                      const [id, recs] = filteredImportEntries[0] || sortedImportEntries[0];
+                      navigate(`/checker/import/${encodeURIComponent(String(id))}`, {
+                        state: { makerRecords: recs },
+                      });
+                    }}
+                  >
+                    View All
+                  </button>
+                )}
                 <button
                   type="button"
-                  className="view-all-btn"
-                  onClick={() => {
-                    const [id, recs] = byImportEntries[0];
-                    navigate(`/checker/import/${encodeURIComponent(String(id))}`, {
-                      state: { makerRecords: recs },
-                    });
-                  }}
+                  className="collapse-btn"
+                  onClick={() => setRecentUploadsCollapsed((collapsed) => !collapsed)}
+                  aria-expanded={!recentUploadsCollapsed}
+                  aria-controls="recent-uploads-content"
+                  title={recentUploadsCollapsed ? 'Expand Recent Uploads' : 'Collapse Recent Uploads'}
                 >
-                  View All
+                  <ChevronDown
+                    size={18}
+                    className={recentUploadsCollapsed ? 'collapse-icon collapsed' : 'collapse-icon'}
+                    aria-hidden="true"
+                  />
                 </button>
-              )}
+              </div>
             </div>
-            {makerDecisionsError && (
-              <p className="recent-uploads-error" role="alert">
-                {makerDecisionsError}
-              </p>
-            )}
-            <div className="recent-uploads-panel">
+            {!recentUploadsCollapsed && (
+              <div id="recent-uploads-content">
+                {makerDecisionsError && (
+                  <p className="recent-uploads-error" role="alert">
+                    {makerDecisionsError}
+                  </p>
+                )}
+                {byImportEntries.length > 0 && (
+                  <div className="recent-uploads-toolbar">
+                    <div className="recent-uploads-search">
+                      <Search size={18} color={colors.textMuted} aria-hidden="true" />
+                      <input
+                        type="search"
+                        value={importSearch}
+                        onChange={(event) => setImportSearch(event.target.value)}
+                        placeholder="Search by Import ID"
+                        aria-label="Search recent uploads by import ID"
+                      />
+                    </div>
+                  </div>
+                )}
+                <div className="recent-uploads-panel">
               {makerDecisionsLoading && !makerDecisions && (
                 <p className="recent-uploads-placeholder">Loading…</p>
               )}
               {!makerDecisionsLoading && !makerDecisionsError && byImportEntries.length === 0 && (
                 <p className="recent-uploads-placeholder">No recent uploads.</p>
               )}
-              {byImportEntries.length > 0 && (
+              {!makerDecisionsLoading && !makerDecisionsError && byImportEntries.length > 0 && filteredImportEntries.length === 0 && (
+                <p className="recent-uploads-placeholder">No uploads found for that Import ID.</p>
+              )}
+              {filteredImportEntries.length > 0 && (
                 <div className="recent-uploads-grid">
-                  {byImportEntries.map(([importId, records]) => {
+                  {filteredImportEntries.map(([importId, records]) => {
                     const list = Array.isArray(records) ? records : [];
                     const allPrinted = list.length > 0 && list.every((r) => {
                       const reason = String(r?.reason ?? '').trim().toLowerCase();
@@ -325,7 +408,9 @@ const CheckerHomePage = () => {
                   })}
                 </div>
               )}
-            </div>
+                </div>
+              </div>
+            )}
           </section>
         )}
 
@@ -334,31 +419,49 @@ const CheckerHomePage = () => {
           <section className="section ready-to-print-section">
             <div className="section-header">
               <h2 className="section-title">Ready to Print</h2>
-              {printReadyData && Object.keys(printReadyData).length > 0 && (
+              <div className="section-header-actions">
+                {printReadyData && Object.keys(printReadyData).length > 0 && false && (
+                  <button
+                    type="button"
+                    className="view-all-btn"
+                    onClick={() => navigate('/checker/print', { state: { printData: printReadyData } })}
+                  >
+                    View All
+                  </button>
+                )}
                 <button
                   type="button"
-                  className="view-all-btn"
-                  onClick={() => navigate('/checker/print', { state: { printData: printReadyData } })}
+                  className="collapse-btn"
+                  onClick={() => setReadyToPrintCollapsed((collapsed) => !collapsed)}
+                  aria-expanded={!readyToPrintCollapsed}
+                  aria-controls="ready-to-print-content"
+                  title={readyToPrintCollapsed ? 'Expand Ready to Print' : 'Collapse Ready to Print'}
                 >
-                  View All
+                  <ChevronDown
+                    size={18}
+                    className={readyToPrintCollapsed ? 'collapse-icon collapsed' : 'collapse-icon'}
+                    aria-hidden="true"
+                  />
                 </button>
-              )}
+              </div>
             </div>
-            {printReadyError && (
-              <p className="recent-uploads-error" role="alert">
-                {printReadyError}
-              </p>
-            )}
-            <div className="recent-uploads-panel">
+            {!readyToPrintCollapsed && (
+              <div id="ready-to-print-content">
+                {printReadyError && (
+                  <p className="recent-uploads-error" role="alert">
+                    {printReadyError}
+                  </p>
+                )}
+                <div className="recent-uploads-panel">
               {printReadyLoading && !printReadyData && (
                 <p className="recent-uploads-placeholder">Loading print data…</p>
               )}
               {!printReadyLoading && !printReadyError && (!printReadyData || Object.keys(printReadyData).length === 0) && (
                 <p className="recent-uploads-placeholder">No badges ready to print.</p>
               )}
-              {printReadyData && Object.entries(printReadyData).length > 0 && (
+              {sortedPrintReadyEntries.length > 0 && (
                 <div className="recent-uploads-grid">
-                  {Object.entries(printReadyData).map(([importId, records]) => {
+                  {sortedPrintReadyEntries.map(([importId, records]) => {
                     const list = Array.isArray(records) ? records : [];
                     const allPrinted = list.length > 0 && list.every((r) => {
                       const reason = String(r?.reason ?? '').trim().toLowerCase();
@@ -386,7 +489,9 @@ const CheckerHomePage = () => {
                   })}
                 </div>
               )}
-            </div>
+                </div>
+              </div>
+            )}
           </section>
         )}
 

@@ -136,8 +136,9 @@ class VolunteerApiService {
   }
 
   /** GET approved maker decisions ready for printing. */
-  async getMakerDecisionsOk() {
-    return this.makeRequest('/api/volunteers/maker-decisions-ok', { method: 'GET' });
+  async getMakerDecisionsOk(userId) {
+    const query = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+    return this.makeRequest(`/api/volunteers/maker-decisions-ok${query}`, { method: 'GET' });
   }
 
   /** Directly insert maker decisions with decision_status='Ok'. */
