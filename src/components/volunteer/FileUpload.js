@@ -275,7 +275,7 @@ const FileUpload = ({
           const eventHeaderIndex = headers.findIndex(h => h && (h.includes('event') || h.includes('event_name') || h.includes('eventname') || h.includes('event number') || h.includes('event_number') || h.includes('eventno')));
           const accessHeaderIndex = headers.findIndex(h => h && (h.includes('access') || h.includes('access_level') || h.includes('accesslevel') || h.includes('access level')));
           const dutyHeaderIndex = headers.findIndex(h => h && (h.includes('duty') || h.includes('duty_type') || h.includes('dutytype') || h.includes('duty type') || h.includes('dutytype')));
-
+       
           if (eventHeaderIndex >= 0 && accessHeaderIndex >= 0 && dutyHeaderIndex >= 0) {
             try {
               const token = await tokenService.getValidAccessToken();
@@ -502,6 +502,9 @@ const FileUpload = ({
         }
         const cnicResult = await cnicResp.json().catch(() => null);
         notFoundCnics = buildNotFoundCnicsSet(cnicResult, cnicsToCheck);
+        if(userScope==="national"){
+          notFoundCnics=new Set(); // skip CNIC check for national users as they may be uploading for other regions where CNICs are not registered yet
+        }
         // Continue with upload even if some CNICs are not found in registration table
       }
 
