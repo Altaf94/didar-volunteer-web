@@ -31,14 +31,14 @@ const REGION_TO_EVENT_MAP = {
  */
 const EVENT_ID_TO_NAME = {
   1: 'Gilgit',
-  2: 'Gupis - 1',
-  3: 'Gupis - 2',
+  2: 'Gupis Day 1',
+  3: 'Gupis Day 2',
   4: 'Hunza',
-  5: 'Ishkoman - 1',
-  6: 'Ishkoman - 2',
+  5: 'Ishkoman Day 1',
+  6: 'Ishkoman Day 2',
   7: 'Lower Chitral',
-  8: 'Upper Chitral - 1',
-  9: 'Upper Chitral - 2',
+  8: 'Upper Chitral Day 1',
+  9: 'Upper Chitral Day 2',
 };
 
 /** Returns array of allowed event IDs for a given region */
