@@ -164,7 +164,11 @@ const CheckerHomePage = () => {
     if (!Array.isArray(recs) || recs.length === 0) return false;
     const noPending = recs.every((r) => {
       const s = String(r?.decisionStatus ?? r?.decision_status ?? r?.decision ?? '').trim().toLowerCase();
-      return !PENDING_STATUSES.includes(s) && (!s.includes('rejected') || s.includes('ok')); ;
+      return !PENDING_STATUSES.includes(s) 
+    });
+    const someOkay = recs.some((r) => {
+      const s = String(r?.decisionStatus ?? r?.decision_status ?? r?.decision ?? '').trim().toLowerCase();
+      return s.includes('ok') ; 
     });
 
     const checkerActed = recs.some((r) => r?.checkerId != null && r?.checkerId !== '');
@@ -172,7 +176,7 @@ const CheckerHomePage = () => {
       const reason = String(r?.reason ?? '').trim().toLowerCase();
       return reason !== 'printed';
     });
-    return noPending && notPrinted;
+    return noPending && notPrinted && someOkay;
   }).length;
 
   const isNationalLevel = userLevel === UserLevel.NATIONAL || userLevel === UserLevel.NATIONAL_ADMIN;
